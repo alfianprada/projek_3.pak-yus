@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_samples/ui/theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_samples/ui/theme.dart'; // sesuaikan dengan path proyekmu
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AddCoursePage extends StatefulWidget {
   const AddCoursePage({super.key});
@@ -31,16 +32,14 @@ class _AddCoursePageState extends State<AddCoursePage> {
     final title = titleController.text.trim();
     final imageUrl = imageUrlController.text.trim().isNotEmpty
         ? imageUrlController.text.trim()
-        : 'assets/images/default.png'; // default image path
-    final video = videoController.text.trim().isNotEmpty
-        ? videoController.text.trim()
-        : ''; // or provide a default video link if you want
+        : 'https://via.placeholder.com/150'; // default image online
+    final video = videoController.text.trim();
     final content = contentController.text.trim();
 
     try {
       await FirebaseFirestore.instance.collection('courses').add({
         'title': title,
-        'images': imageUrl, // use the same field as your model
+        'imageUrl': imageUrl,
         'videoUrl': video,
         'content': content,
         'createdAt': FieldValue.serverTimestamp(),
@@ -122,7 +121,8 @@ class _AddCoursePageState extends State<AddCoursePage> {
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.all(16),
                                 ),
-                                validator: (v) => v == null || v.isEmpty ? 'Enter title' : null,
+                                validator: (v) =>
+                                    v == null || v.isEmpty ? 'Enter title' : null,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -199,7 +199,8 @@ class _AddCoursePageState extends State<AddCoursePage> {
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.all(16),
                                 ),
-                                validator: (v) => v == null || v.isEmpty ? 'Enter content' : null,
+                                validator: (v) =>
+                                    v == null || v.isEmpty ? 'Enter content' : null,
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -271,6 +272,69 @@ class _AddCoursePageState extends State<AddCoursePage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class CourseListPage extends StatelessWidget {
+  const CourseListPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Courses')),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('courses')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final docs = snapshot.data!.docs;
+          return ListView.builder(
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final data = docs[index].data() as Map<String, dynamic>;
+              return Card(
+                margin: const EdgeInsets.all(8),
+                child: ListTile(
+                  leading: data['imageUrl'] != null && data['imageUrl'] != ''
+                      ? CachedNetworkImage(
+                          imageUrl: data['imageUrl'],
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const SizedBox(
+                            width: 60,
+                            height: 60,
+                            child: Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.broken_image),
+                        )
+                      : const Icon(Icons.image),
+                  title: Text(data['title'] ?? ''),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (data['videoUrl'] != null && data['videoUrl'] != '')
+                        Text(
+                          'Video: ${data['videoUrl']}',
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.blue),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

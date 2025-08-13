@@ -3,35 +3,27 @@ import 'package:flutter/material.dart';
 class CourseModel {
   final String id;
   final String title;
-  final String? subtitle;
-  final String caption;
-  final Color color;
-  final String images;
-  final String image;
-  final String link;
+  final String imageUrl;
+  final String videoUrl;
+  final String content;
 
   CourseModel({
     required this.id,
     required this.title,
-    this.subtitle,
-    required this.caption,
-    required this.color,
-    required this.images,
-    required this.image,
-    required this.link,
+    required this.imageUrl,
+    required this.videoUrl,
+    required this.content,
   });
 
-  // Factory constructor to create CourseModel from Firestore map
-  factory CourseModel.fromMap(String id, Map<String, dynamic> map) {
+  factory CourseModel.fromMap(String id, Map<String, dynamic> data) {
     return CourseModel(
       id: id,
-      title: map['title'] ?? '',
-      subtitle: map['subtitle'],
-      caption: map['caption'] ?? '',
-      color: Color(int.parse(map['color'] ?? '0xFFFFFFFF')),
-      images: map['images'] ?? '',
-      image: map['image'] ?? '',
-      link: map['link'] ?? '',
+      title: data['title'] ?? '',
+      imageUrl: (data['imageUrl'] != null && data['imageUrl'].toString().startsWith('http'))
+          ? data['imageUrl']
+          : 'https://via.placeholder.com/150',
+      videoUrl: data['videoUrl'] ?? '',
+      content: data['content'] ?? '',
     );
   }
 }

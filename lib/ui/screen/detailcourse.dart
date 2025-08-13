@@ -1,11 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_samples/ui/models/courses.dart';
-import 'package:flutter_samples/ui/theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/courses.dart';
+import '../theme.dart';
 
 class CourseDetailPage extends StatelessWidget {
-  const CourseDetailPage({Key? key, required this.course}) : super(key: key);
-
   final CourseModel course;
+
+  const CourseDetailPage({super.key, required this.course});
+
+  Future<void> _deleteCourse(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Course'),
+        content: const Text('Are you sure you want to delete this course?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await FirebaseFirestore.instance.collection('courses').doc(course.id).delete();
+      if (context.mounted) {
+        Navigator.pop(context); // Go back after delete
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Course deleted')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,23 +68,24 @@ class CourseDetailPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// Card gambar
                     Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                       clipBehavior: Clip.antiAlias,
                       elevation: 10,
-                      child: Image.asset(
-                        course.image,
+                      child: Image.network(
+                        course.imageUrl,
                         height: 250,
                         width: double.infinity,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.broken_image, size: 100),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      course.link,
+                      course.videoUrl,
                       style: const TextStyle(
                         fontSize: 16,
                         fontFamily: "Inter",
@@ -62,41 +93,27 @@ class CourseDetailPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (course.subtitle != null)
+                    // If you want to show content as subtitle
+                    if (course.content.isNotEmpty)
                       Text(
-                        course.subtitle!,
+                        course.content,
                         style: const TextStyle(
                           fontSize: 16,
                           fontFamily: "Inter",
                           color: Colors.black54,
                         ),
                       ),
-                    const SizedBox(height: 8),
-                    Text(
-                      course.caption,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontFamily: "Inter",
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black45,
-                      ),
-                    ),
-
-                    /// Card deskripsi
                     const SizedBox(height: 12),
                     Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      color: course.color,
+                      color: Colors.blueGrey, // Use a default color
                       elevation: 5,
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Text(
-                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
-                          "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. "
-                          "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. "
-                          "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum....",
+                          course.content,
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,
@@ -105,8 +122,6 @@ class CourseDetailPage extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    /// Tombol aksi
                     const SizedBox(height: 90),
                     Row(
                       children: [
@@ -121,13 +136,7 @@ class CourseDetailPage extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Edit button pressed"),
-                                ),
-                              );
-                            },
+                            onPressed: () {},
                             child: const Text(
                               "Edit",
                               style: TextStyle(
@@ -150,13 +159,7 @@ class CourseDetailPage extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Delete button pressed"),
-                                ),
-                              );
-                            },
+                            onPressed: () => _deleteCourse(context),
                             child: const Text(
                               "Delete",
                               style: TextStyle(
