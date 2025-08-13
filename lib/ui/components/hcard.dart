@@ -1,63 +1,94 @@
-// Mengimpor package material dari Flutter untuk widget Material Design
 import 'package:flutter/material.dart';
-// Mengimpor model data untuk kursus
 import 'package:flutter_samples/ui/models/courses.dart';
+import 'package:flutter_samples/ui/screen/detailcourse.dart';
 
-// Widget untuk kartu kursus horizontal
 class HCard extends StatelessWidget {
-  const HCard({Key? key, required this.section}) : super(key: key);
-
-  // Data seksi kursus yang ditampilkan pada kartu
   final CourseModel section;
+
+  const HCard({super.key, required this.section});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // Membatasi tinggi maksimum kartu
-      constraints: const BoxConstraints(maxHeight: 110),
-      // Padding dalam kartu
-      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-      // Dekorasi kartu dengan warna dari section dan sudut membulat
-      decoration: BoxDecoration(
-        color: section.color, // Warna latar belakang dari CourseModel
-        borderRadius: BorderRadius.circular(30), // Sudut membulat
-      ),
-      child: Row(
-        children: [
-          // Kolom teks yang mengisi ruang tersedia
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min, // Kolom menyesuaikan konten
-              crossAxisAlignment: CrossAxisAlignment.start, // Teks rata kiri
-              children: [
-                // Judul seksi kursus
-                Text(
-                  section.title,
-                  style: const TextStyle(
-                      fontSize: 24,
-                      fontFamily: "Poppins", // Font kustom
-                      color: Colors.white),
-                ),
-                const SizedBox(height: 8), // Jarak antar teks
-                // Keterangan seksi kursus
-                Text(
-                  section.caption,
-                  style: const TextStyle(
-                      fontSize: 17,
-                      fontFamily: "Inter", // Font kustom
-                      color: Colors.white),
-                ),
-              ],
-            ),
+    Widget imageWidget;
+    if (section.images.isNotEmpty) {
+      if (section.images.startsWith('http')) {
+        imageWidget = Image.network(
+          section.images,
+          height: 100,
+          width: 100,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 100),
+        );
+      } else {
+        imageWidget = Image.asset(
+          section.images,
+          height: 100,
+          width: 100,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Image.asset(
+            'assets/images/default.png',
+            height: 100,
+            width: 100,
+            fit: BoxFit.cover,
           ),
-          // Garis pemisah vertikal
-          const Padding(
-            padding: EdgeInsets.all(20),
-            child: VerticalDivider(thickness: 0.8, width: 0),
+        );
+      }
+    } else {
+      imageWidget = Image.asset(
+        'assets/images/default.png',
+        height: 100,
+        width: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CourseDetailPage(course: section),
           ),
-          // Gambar seksi kursus
-          Image.asset(section.image), // Gambar dari CourseModel
-        ],
+        );
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        elevation: 5,
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          children: [
+            imageWidget,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      section.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontFamily: "Poppins",
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (section.subtitle != null)
+                      Text(
+                        section.subtitle!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                  ],
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

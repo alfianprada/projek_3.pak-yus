@@ -1,4 +1,4 @@
-package com.ashu.flutter_samples
+package com.yuga.course
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "565733212138",
+    "project_id": "course-a0d02",
+    "storage_bucket": "course-a0d02.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565733212138:android:84dd7c677b0344a4c23c93",
+        "android_client_info": {
+          "package_name": "com.yuga.course"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRl2tVddBOBgLG5EYFoXlSrE0hYuspRlo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,121 +1,127 @@
-// Mengimpor package material dari Flutter untuk widget Material Design
 import 'package:flutter/material.dart';
-// Mengimpor model data untuk kursus
 import 'package:flutter_samples/ui/models/courses.dart';
 import 'package:flutter_samples/ui/screen/detailcourse.dart';
 
-
-// Widget untuk kartu kursus vertikal
-class VCard extends StatefulWidget {
-  const VCard({Key? key, required this.course}) : super(key: key);
-
-  // Data kursus yang ditampilkan pada kartu
+class VCard extends StatelessWidget {
   final CourseModel course;
 
-  @override
-  State<VCard> createState() => _VCardState();
-}
-
-// State untuk VCard, mengelola tampilan kartu
-class _VCardState extends State<VCard> {
-  // Daftar avatar (tidak digunakan dalam build saat ini)
-  final avatars = [4, 5, 6];
-
-  @override
-  void initState() {
-    // Mengacak daftar avatar saat inisialisasi
-    avatars.shuffle();
-    super.initState();
-  }
+  const VCard({super.key, required this.course});
 
   @override
   Widget build(BuildContext context) {
+    Widget imageWidget;
+    if (course.images.isNotEmpty) {
+      if (course.images.startsWith('http')) {
+        imageWidget = Image.network(
+          course.images,
+          height: 80,
+          width: 80,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.broken_image, size: 80, color: Colors.white),
+        );
+      } else {
+        imageWidget = Image.asset(
+          course.images,
+          height: 80,
+          width: 80,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Image.asset(
+            'assets/images/default.png',
+            height: 80,
+            width: 80,
+            fit: BoxFit.cover,
+          ),
+        );
+      }
+    } else {
+      imageWidget = Image.asset(
+        'assets/images/default.png',
+        height: 80,
+        width: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.image_not_supported, size: 40, color: Colors.white),
+      );
+    }
+
     return GestureDetector(
       onTap: () {
-        // Navigasi ke halaman detail kursus dengan mengirimkan data kursus
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CourseDetailPage(course: widget.course),
+            builder: (context) => CourseDetailPage(course: course),
           ),
         );
       },
       child: Container(
-        // Membatasi ukuran maksimum kartu
         constraints: const BoxConstraints(maxWidth: 260, maxHeight: 310),
-        padding: const EdgeInsets.all(30), // Padding dalam kartu
+        padding: const EdgeInsets.all(30),
         decoration: BoxDecoration(
-          // Gradien warna berdasarkan properti course.color
           gradient: LinearGradient(
-            colors: [widget.course.color, widget.course.color.withOpacity(0.5)],
+            colors: [course.color, course.color.withOpacity(0.5)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          // Efek bayangan untuk tampilan 3D
           boxShadow: [
             BoxShadow(
-              color: widget.course.color.withOpacity(0.3),
+              color: course.color.withOpacity(0.3),
               blurRadius: 8,
               offset: const Offset(0, 12),
             ),
             BoxShadow(
-              color: widget.course.color.withOpacity(0.3),
+              color: course.color.withOpacity(0.3),
               blurRadius: 2,
               offset: const Offset(0, 1),
             ),
           ],
-          borderRadius: BorderRadius.circular(30), // Sudut membulat
+          borderRadius: BorderRadius.circular(30),
         ),
         child: Stack(
-          clipBehavior: Clip.none, // Memungkinkan elemen keluar dari batas kartu
+          clipBehavior: Clip.none,
           children: [
-            // Konten utama kartu
             Column(
-              crossAxisAlignment: CrossAxisAlignment.start, // Konten rata kiri
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Judul kursus
                 Container(
                   constraints: const BoxConstraints(maxWidth: 170),
                   child: Text(
-                    widget.course.title,
+                    course.title,
                     style: const TextStyle(
                       fontSize: 24,
-                      fontFamily: "Poppins", // Font kustom
+                      fontFamily: "Poppins",
                       color: Colors.white,
                     ),
                   ),
                 ),
-                const SizedBox(height: 8), // Jarak antar elemen
-                // Subjudul kursus dengan pembatasan teks
-                Text(
-                  widget.course.subtitle!, // Subjudul (force unwrap)
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
-                  softWrap: false,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7), // Teks dengan opasitas
-                    fontSize: 15,
+                const SizedBox(height: 8),
+                if (course.subtitle != null)
+                  Text(
+                    course.subtitle!,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 15,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8), // Jarak antar elemen
-                // Keterangan kursus (uppercase)
+                const SizedBox(height: 8),
                 Text(
-                  widget.course.caption.toUpperCase(),
+                  course.caption.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 13,
-                    fontFamily: "Inter", // Font kustom
+                    fontFamily: "Inter",
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
                 ),
-                const Spacer(), // Mengisi ruang kosong di bawah
+                const Spacer(),
               ],
             ),
-            // Gambar kursus di posisi kanan atas
             Positioned(
               right: -10,
               top: -10,
-              child: Image.asset(widget.course.images), // Gambar dari CourseModel
+              child: imageWidget,
             ),
           ],
         ),
