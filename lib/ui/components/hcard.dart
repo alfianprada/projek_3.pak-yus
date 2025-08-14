@@ -50,14 +50,14 @@ class _HCardState extends State<HCard> {
       },
       child: Container(
         constraints: const BoxConstraints(maxHeight: 110),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [cardColor, cardColor.withOpacity(0.6)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
               color: cardColor.withOpacity(0.3),
@@ -82,7 +82,7 @@ class _HCardState extends State<HCard> {
                   Text(
                     widget.section.title,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 24,
                       fontFamily: "Poppins",
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -93,7 +93,7 @@ class _HCardState extends State<HCard> {
                   Text(
                     formatDate(widget.section.createdAt),
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 17,
                       color: Colors.white.withOpacity(0.8),
                     ),
                   ),

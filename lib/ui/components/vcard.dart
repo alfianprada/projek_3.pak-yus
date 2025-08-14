@@ -49,11 +49,11 @@ class _VCardState extends State<VCard> {
         );
       },
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 260, maxHeight: 160),
-        padding: const EdgeInsets.all(20),
+        constraints: const BoxConstraints(maxWidth: 260, maxHeight: 310),
+        padding: const EdgeInsets.all(30),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [cardColor, cardColor.withOpacity(0.6)],
+            colors: [cardColor, cardColor.withOpacity(0.5)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -61,15 +61,15 @@ class _VCardState extends State<VCard> {
             BoxShadow(
               color: cardColor.withOpacity(0.3),
               blurRadius: 8,
-              offset: const Offset(0, 6),
+              offset: const Offset(0, 12),
             ),
             BoxShadow(
               color: cardColor.withOpacity(0.2),
               blurRadius: 2,
-              offset: const Offset(0, 2),
+              offset: const Offset(0, 1),
             ),
           ],
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(30),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,21 +78,21 @@ class _VCardState extends State<VCard> {
             Text(
               widget.course.title,
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 24,
                 fontFamily: "Poppins",
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             // Content (max 3 lines)
             Text(
               widget.course.content,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.9),
+                fontSize: 15,
+                color: Colors.white.withOpacity(0.7),
               ),
             ),
             const Spacer(),
@@ -100,7 +100,7 @@ class _VCardState extends State<VCard> {
             Text(
               formatDate(widget.course.createdAt),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: Colors.white.withOpacity(0.7),
               ),
             ),
