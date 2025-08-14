@@ -1,12 +1,25 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/courses.dart';
 import '../theme.dart';
+import '../screen/editcourse.dart';
 
 class CourseDetailPage extends StatelessWidget {
   final CourseModel course;
 
   const CourseDetailPage({super.key, required this.course});
+
+  Color getRandomColor() {
+    final random = Random();
+    return Color.fromARGB(
+      255,
+      random.nextInt(256),
+      random.nextInt(256),
+      random.nextInt(256),
+    );
+  }
 
   Future<void> _deleteCourse(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -26,10 +39,11 @@ class CourseDetailPage extends StatelessWidget {
         ],
       ),
     );
+
     if (confirm == true) {
       await FirebaseFirestore.instance.collection('courses').doc(course.id).delete();
       if (context.mounted) {
-        Navigator.pop(context); // Go back after delete
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Course deleted')),
         );
@@ -37,8 +51,30 @@ class CourseDetailPage extends StatelessWidget {
     }
   }
 
+  Future<void> _launchVideo(BuildContext context) async {
+    if (course.videoUrl.isEmpty) return;
+    final url = Uri.parse(course.videoUrl);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch video')),
+        );
+      }
+    }
+  }
+
+  String getFormattedDate(DateTime? date) {
+    if (date == null) return '';
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} "
+        "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+  }
+
   @override
   Widget build(BuildContext context) {
+    final randomColor = getRandomColor();
+
     return Container(
       color: RiveAppTheme.background2,
       child: Center(
@@ -68,6 +104,7 @@ class CourseDetailPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    /// Image with error handling
                     Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -79,41 +116,65 @@ class CourseDetailPage extends StatelessWidget {
                         height: 250,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.broken_image, size: 100),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      course.videoUrl,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontFamily: "Inter",
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // If you want to show content as subtitle
-                    if (course.content.isNotEmpty)
-                      Text(
-                        course.content,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontFamily: "Inter",
-                          color: Colors.black54,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(child: CircularProgressIndicator());
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 250,
+                          color: Colors.grey[300],
+                          child: const Center(
+                            child: Text(
+                              "Image Link Not Supported. Try Another Image.",
+                              style: TextStyle(color: Colors.black54, fontFamily: "Inter"),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    /// Video link
+                    if (course.videoUrl.isNotEmpty)
+                      InkWell(
+                        onTap: () => _launchVideo(context),
+                        child: Text(
+                          course.videoUrl,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: "Inter",
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+
+                    /// Date
+                    Text(
+                      getFormattedDate(course.createdAt),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                        fontFamily: "Inter",
+                      ),
+                    ),
                     const SizedBox(height: 12),
+
+                    /// Content card with random color
                     Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      color: Colors.blueGrey, // Use a default color
+                      color: randomColor,
                       elevation: 5,
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Text(
-                          course.content,
+                          course.content.isNotEmpty
+                              ? course.content
+                              : "No content available.",
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,
@@ -122,7 +183,9 @@ class CourseDetailPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 90),
+                    const SizedBox(height: 30),
+
+                    /// Buttons
                     Row(
                       children: [
                         Expanded(
@@ -136,7 +199,19 @@ class CourseDetailPage extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            onPressed: () {},
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditCoursePage(course: course),
+                                ),
+                              );
+                              if (result == true && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Course updated!')),
+                                );
+                              }
+                            },
                             child: const Text(
                               "Edit",
                               style: TextStyle(

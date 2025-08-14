@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CourseModel {
   final String id;
@@ -6,6 +6,7 @@ class CourseModel {
   final String imageUrl;
   final String videoUrl;
   final String content;
+  final DateTime? createdAt;
 
   CourseModel({
     required this.id,
@@ -13,6 +14,7 @@ class CourseModel {
     required this.imageUrl,
     required this.videoUrl,
     required this.content,
+    this.createdAt,
   });
 
   factory CourseModel.fromMap(String id, Map<String, dynamic> data) {
@@ -24,6 +26,9 @@ class CourseModel {
           : 'https://via.placeholder.com/150',
       videoUrl: data['videoUrl'] ?? '',
       content: data['content'] ?? '',
+      createdAt: (data['createdAt'] != null && data['createdAt'] is Timestamp)
+          ? (data['createdAt'] as Timestamp).toDate()
+          : null,
     );
   }
 }

@@ -15,22 +15,21 @@ class HomeTabView extends StatefulWidget {
 class _HomeTabViewState extends State<HomeTabView> {
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    int crossAxisCount() => screenWidth > 992 ? 2 : 1;
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(
-          color: RiveAppTheme.background,
-          borderRadius: BorderRadius.circular(30),
-        ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 60,
-            bottom: MediaQuery.of(context).padding.bottom,
-          ),
+          padding: EdgeInsets.only(top: topPadding + 20, bottom: bottomPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Title "Courses"
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
@@ -38,8 +37,9 @@ class _HomeTabViewState extends State<HomeTabView> {
                   style: TextStyle(fontSize: 34, fontFamily: "Poppins"),
                 ),
               ),
+              const SizedBox(height: 10),
 
-              // Horizontal courses list
+              // Courses horizontal list
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('courses')
@@ -53,6 +53,7 @@ class _HomeTabViewState extends State<HomeTabView> {
                       child: CircularProgressIndicator(),
                     ));
                   }
+
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return const Padding(
                       padding: EdgeInsets.all(20),
@@ -63,14 +64,19 @@ class _HomeTabViewState extends State<HomeTabView> {
                   final courses = snapshot.data!.docs;
 
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
                     scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: Row(
                       children: courses.map((doc) {
                         final data = doc.data() as Map<String, dynamic>;
                         return Padding(
                           padding: const EdgeInsets.all(10),
-                          child: VCard(course: CourseModel.fromMap(doc.id, data)),
+                          child: SizedBox(
+                            width: screenWidth > 992
+                                ? 250 // ukuran VCard di desktop
+                                : 200, // ukuran VCard di mobile
+                            child: VCard(course: CourseModel.fromMap(doc.id, data)),
+                          ),
                         );
                       }).toList(),
                     ),
@@ -78,15 +84,19 @@ class _HomeTabViewState extends State<HomeTabView> {
                 },
               ),
 
+              const SizedBox(height: 20),
+
+              // Title "Recent"
               const Padding(
-                padding: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
                   "Recent",
                   style: TextStyle(fontSize: 20, fontFamily: "Poppins"),
                 ),
               ),
+              const SizedBox(height: 10),
 
-              // Recent courses list
+              // Recent courses grid adaptif
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('courses')
@@ -101,6 +111,7 @@ class _HomeTabViewState extends State<HomeTabView> {
                       child: CircularProgressIndicator(),
                     ));
                   }
+
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return const Padding(
                       padding: EdgeInsets.all(20),
@@ -113,21 +124,23 @@ class _HomeTabViewState extends State<HomeTabView> {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: Wrap(
-                      children: List.generate(recentCourses.length, (index) {
-                        final data =
-                            recentCourses[index].data() as Map<String, dynamic>;
-                        return Container(
-                          width: MediaQuery.of(context).size.width > 992
-                              ? ((MediaQuery.of(context).size.width - 20) / 2)
-                              : MediaQuery.of(context).size.width,
-                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 20),
-                          child: HCard(section: CourseModel.fromMap(recentCourses[index].id, data)),
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: recentCourses.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final cardWidth = screenWidth > 992
+                            ? (screenWidth - 30) / 2 // 2 kolom desktop
+                            : screenWidth - 20; // 1 kolom mobile
+                        return SizedBox(
+                          width: cardWidth,
+                          child: HCard(section: CourseModel.fromMap(doc.id, data)),
                         );
-                      }),
+                      }).toList(),
                     ),
                   );
                 },
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

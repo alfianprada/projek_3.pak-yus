@@ -1,10 +1,41 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-import '../models/courses.dart';
-import '../screen/detailcourse.dart';
+import 'package:flutter_samples/ui/models/courses.dart';
+import 'package:flutter_samples/ui/screen/detailcourse.dart';
 
-class HCard extends StatelessWidget {
+class HCard extends StatefulWidget {
+  const HCard({Key? key, required this.section}) : super(key: key);
+
   final CourseModel section;
-  const HCard({super.key, required this.section});
+
+  @override
+  State<HCard> createState() => _HCardState();
+}
+
+class _HCardState extends State<HCard> {
+  late Color cardColor;
+
+  @override
+  void initState() {
+    super.initState();
+    cardColor = getRandomColor();
+  }
+
+  Color getRandomColor() {
+    final Random random = Random();
+    return Color.fromARGB(
+      255,
+      random.nextInt(256),
+      random.nextInt(256),
+      random.nextInt(256),
+    );
+  }
+
+  String formatDate(DateTime? date) {
+    if (date == null) return '';
+    return "${date.year}-${date.month.toString().padLeft(2,'0')}-${date.day.toString().padLeft(2,'0')} "
+           "${date.hour.toString().padLeft(2,'0')}:${date.minute.toString().padLeft(2,'0')}";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,52 +44,62 @@ class HCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CourseDetailPage(course: section),
+            builder: (context) => CourseDetailPage(course: widget.section),
           ),
         );
       },
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 110),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [cardColor, cardColor.withOpacity(0.6)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: cardColor.withOpacity(0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: cardColor.withOpacity(0.2),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-        elevation: 5,
-        clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
-            Image.network(
-              section.imageUrl,
-              height: 100,
-              width: 100, // <-- FIX: set a fixed width
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.broken_image, size: 100),
-            ),
-            const SizedBox(width: 10),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      section.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontFamily: "Poppins",
-                        fontWeight: FontWeight.bold,
-                      ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    widget.section.title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontFamily: "Poppins",
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
-                    if (section.content.isNotEmpty)
-                      Text(
-                        section.content,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Created at
+                  Text(
+                    formatDate(widget.section.createdAt),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                ],
               ),
-            )
+            ),
           ],
         ),
       ),
