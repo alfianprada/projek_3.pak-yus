@@ -1,118 +1,156 @@
-// Mengimpor package material dari Flutter untuk widget Material Design
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-// Mengimpor definisi tema aplikasi
+import 'package:flutter_samples/ui/models/courses.dart';
+import 'package:flutter_samples/ui/screen/detailcourse.dart';
 import 'package:flutter_samples/ui/theme.dart';
 
-// Widget untuk halaman pencarian aplikasi
-class SearchPage extends StatelessWidget {
+class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
+
+  @override
+  State<SearchPage> createState() => _SearchPageState();
+}
+
+class _SearchPageState extends State<SearchPage> {
+  String searchQuery = '';
+  final Random random = Random();
+
+  Color getRandomColor() {
+    return Color.fromARGB(
+      255,
+      random.nextInt(256),
+      random.nextInt(256),
+      random.nextInt(256),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Latar belakang menggunakan warna sekunder dari tema (biru tua)
       color: RiveAppTheme.background2,
       child: Center(
         child: Container(
-          // Kontainer utama dengan latar belakang tema dan sudut membulat
           decoration: BoxDecoration(
-            color: RiveAppTheme.background, // Warna latar belakang utama (biru terang)
-            borderRadius: BorderRadius.circular(30), // Sudut membulat
+            color: RiveAppTheme.background,
+            borderRadius: BorderRadius.circular(30),
           ),
-          clipBehavior: Clip.hardEdge, // Memotong konten yang melebihi batas border
+          clipBehavior: Clip.hardEdge,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding dalam
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, // Teks rata kiri
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 50), // Jarak atas
-                // Judul halaman
+                const SizedBox(height: 50),
                 const Text(
                   'Search',
                   style: TextStyle(
                     fontSize: 34,
-                    fontFamily: "Poppins", // Font kustom
+                    fontFamily: "Poppins",
                   ),
                 ),
-                const SizedBox(height: 20), // Jarak antar elemen
-                // Kolom pencarian
+                const SizedBox(height: 20),
+                // Search box
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20), // Padding dalam kolom pencarian
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.white, // Latar belakang putih
-                    borderRadius: BorderRadius.circular(25), // Sudut membulat
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
                     boxShadow: const [
                       BoxShadow(
-                        color: Colors.black12, // Bayangan halus
+                        color: Colors.black12,
                         blurRadius: 5,
                         offset: Offset(0, 3),
                       ),
                     ],
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.search, color: Colors.grey), // Ikon pencarian
-                      SizedBox(width: 10), // Jarak antar ikon dan teks
-                      Text(
-                        "Searching...", // Placeholder teks pencarian
-                        style: TextStyle(
-                          fontFamily: "Poppins",
-                          color: Colors.grey,
+                      const Icon(Icons.search, color: Colors.grey),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          decoration: const InputDecoration(
+                            hintText: "Search courses...",
+                            border: InputBorder.none,
+                            hintStyle: TextStyle(
+                              fontFamily: "Poppins",
+                              color: Colors.grey,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              searchQuery = value.toLowerCase();
+                            });
+                          },
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10), // Jarak antar elemen
-                // Daftar item pencarian
+                const SizedBox(height: 10),
+                // Course list from Firestore
                 Expanded(
-                  child: ListView(
-                    children: [
-                      // Item daftar untuk setiap bab
-                      _buildBabTile(
-                        "Chapter 1",
-                        "Introduction to Software",
-                        "assets/samples/images/topic_2.png", // Ikon bab
-                        const Color(0xFF9CC5FF), // Warna latar belakang
-                      ),
-                      _buildBabTile(
-                        "Chapter 2",
-                        "Basic Logic and Algorithms",
-                        "assets/samples/images/topic_1.png",
-                        const Color(0xFF6E6AE8),
-                      ),
-                      _buildBabTile(
-                        "Chapter 3",
-                        "Basic Programming Language",
-                        "assets/samples/images/topic_2.png",
-                        const Color(0xFF005FE7),
-                      ),
-                      _buildBabTile(
-                        "Chapter 4",
-                        "Basic Programming",
-                        "assets/samples/images/topic_1.png",
-                        const Color(0xFFBBA6FF),
-                      ),
-                      _buildBabTile(
-                        "Chapter 7",
-                        "UI Design with Figma",
-                        "assets/samples/images/topic_2.png",
-                        const Color(0xFF58CAFF),
-                      ),
-                      _buildBabTile(
-                        "Chapter 8",
-                        "Web Application Development",
-                        "assets/samples/images/topic_1.png",
-                        const Color(0xFF8D75DC),
-                      ),
-                      _buildBabTile(
-                        "Chapter 9",
-                        "Database",
-                        "assets/samples/images/topic_2.png",
-                        const Color.fromARGB(255, 88, 105, 255),
-                      ),
-                    ],
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('courses')
+                        .orderBy('createdAt', descending: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            "No courses found.",
+                            style: TextStyle(fontFamily: "Poppins"),
+                          ),
+                        );
+                      }
+
+                      final courses = snapshot.data!.docs
+                          .map((doc) => CourseModel.fromMap(
+                                doc.id,
+                                doc.data() as Map<String, dynamic>,
+                              ))
+                          .where((course) =>
+                              course.title.toLowerCase().contains(searchQuery) ||
+                              course.content.toLowerCase().contains(searchQuery))
+                          .toList();
+
+                      if (courses.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            "No matching courses.",
+                            style: TextStyle(fontFamily: "Poppins"),
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        itemCount: courses.length,
+                        itemBuilder: (context, index) {
+                          final course = courses[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CourseDetailPage(course: course),
+                                ),
+                              );
+                            },
+                            child: _buildBabTile(
+                              course.title,
+                              course.content,
+                              getRandomColor(),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
               ],
@@ -123,27 +161,26 @@ class SearchPage extends StatelessWidget {
     );
   }
 
-  // Fungsi untuk membangun tile bab dengan desain kustom
-  static Widget _buildBabTile(String bab, String desc, String iconPath, Color color) {
+  Widget _buildBabTile(String bab, String desc, Color color) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20), // Jarak antar tile
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: color, // Warna latar belakang tile
-        borderRadius: BorderRadius.circular(30), // Sudut membulat
+        color: color,
+        borderRadius: BorderRadius.circular(30),
         boxShadow: const [
           BoxShadow(
-            color: Colors.black26, // Bayangan tile
+            color: Colors.black26,
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24), // Padding dalam tile
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Row(
         children: [
+          // Title + separator |
           Row(
             children: [
-              // Teks nomor bab
               Text(
                 bab,
                 style: const TextStyle(
@@ -153,34 +190,26 @@ class SearchPage extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(width: 14), // Jarak antar elemen
-              // Garis pemisah vertikal
+              const SizedBox(width: 14),
               Container(
                 width: 2,
                 height: 50,
                 color: Colors.white54,
               ),
-              const SizedBox(width: 14), // Jarak antar elemen
+              const SizedBox(width: 14),
             ],
           ),
-          // Deskripsi bab
+          // Description
           Expanded(
             child: Text(
               desc,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontFamily: "Poppins",
                 fontSize: 16,
                 color: Colors.white,
               ),
-            ),
-          ),
-          // Ikon bab
-          Container(
-            padding: const EdgeInsets.all(8),
-            child: Image.asset(
-              iconPath, // Path ikon bab
-              width: 45,
-              height: 45,
             ),
           ),
         ],
