@@ -54,13 +54,54 @@ class _EditCoursePageState extends State<EditCoursePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Course updated successfully")),
       );
-      Navigator.pop(context, true); // Return to detail page
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
     }
+  }
+
+  Widget buildInputField({
+    required String label,
+    required String hint,
+    TextEditingController? controller,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontFamily: "Poppins",
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: TextFormField(
+            controller: controller,
+            maxLines: maxLines,
+            decoration: InputDecoration(
+              hintText: hint,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(16),
+            ),
+            validator: validator,
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
   }
 
   @override
@@ -74,157 +115,116 @@ class _EditCoursePageState extends State<EditCoursePage> {
             borderRadius: BorderRadius.circular(30),
           ),
           clipBehavior: Clip.hardEdge,
-          child: Scaffold(
-            backgroundColor: RiveAppTheme.background,
-            appBar: AppBar(
-              title: const Text(
-                "Edit Course",
-                style: TextStyle(
-                  fontFamily: "Poppins",
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              backgroundColor: RiveAppTheme.background,
-              elevation: 0,
-            ),
-            body: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Course Title",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontFamily: "Poppins",
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 50),
+                    const Text(
+                          'Edit Course',
+                          style: TextStyle(
+                            fontSize: 34,
+                            fontFamily: "Poppins",
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87, // <-- Add this
+                          ),
+                        ),
+                    const SizedBox(height: 10),
+                    Card(
+                      color: Colors.blue[100],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            buildInputField(
+                              label: "Course Title",
+                              hint: "Course title..",
+                              controller: titleController,
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'Enter title' : null,
+                            ),
+                            buildInputField(
+                              label: "Image Illustration",
+                              hint: "Paste image URL",
+                              controller: imageUrlController,
+                            ),
+                            buildInputField(
+                              label: "Video Material",
+                              hint: "Embed a video",
+                              controller: videoController,
+                            ),
+                            buildInputField(
+                              label: "Content of Material",
+                              hint: "Content of Material.....",
+                              controller: contentController,
+                              maxLines: 7,
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'Enter content' : null,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: titleController,
-                        decoration: const InputDecoration(
-                          hintText: "Course title...",
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (v) => v == null || v.isEmpty ? 'Enter title' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Image Illustration (URL)",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontFamily: "Poppins",
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: imageUrlController,
-                        decoration: const InputDecoration(
-                          hintText: "Paste image URL",
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Video Material",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontFamily: "Poppins",
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: videoController,
-                        decoration: const InputDecoration(
-                          hintText: "Embed a video",
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Content of Material",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontFamily: "Poppins",
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: contentController,
-                        maxLines: 7,
-                        decoration: const InputDecoration(
-                          hintText: "Content of Material.....",
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (v) => v == null || v.isEmpty ? 'Enter content' : null,
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue[600],
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[600],
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 25),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              onPressed: updateCourse,
-                              child: const Text(
-                                "Submit",
-                                style: TextStyle(
-                                  fontFamily: "Poppins",
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                ),
+                            ),
+                            onPressed: updateCourse,
+                            child: const Text(
+                              "Update & Publish",
+                              style: TextStyle(
+                                fontFamily: "Poppins",
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red[500],
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red[500],
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 25),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              onPressed: () {
-                                Navigator.pop(context, false); // Cancel and go back
-                              },
-                              child: const Text(
-                                "Cancel",
-                                style: TextStyle(
-                                  fontFamily: "Poppins",
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                ),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context, false); // cancel
+                            },
+                            child: const Text(
+                              "Cancel",
+                              style: TextStyle(
+                                fontFamily: "Poppins",
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
