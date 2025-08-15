@@ -1,45 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../components/menu_row.dart';
 import '../models/menu_item.dart';
 import '../theme.dart';
 
 class SideMenu extends StatefulWidget {
-  const SideMenu({super.key, required this.onTabChange, required this.closeMenu});
+  const SideMenu({
+    super.key,
+    required this.onTabChange,
+    required this.closeMenu,
+    this.selectedTabIndex = 0, // beri default 0
+  });
 
   final Function(int index) onTabChange;
   final VoidCallback closeMenu;
+  final int selectedTabIndex; // sekarang optional, default 0
 
   @override
   State<SideMenu> createState() => _SideMenuState();
 }
 
+
 class _SideMenuState extends State<SideMenu> {
   final List<MenuItemModel> _browseMenuIcons = MenuItemModel.menuItems;
   String _selectedMenu = MenuItemModel.menuItems[0].title;
-
-  String? _username;
-  String? _role = "Software Engineer"; // Default role
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      DocumentSnapshot snapshot =
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (snapshot.exists) {
-        setState(() {
-          _username = snapshot.get('username') ?? 'User';
-        });
-      }
-    }
-  }
 
   void onMenuPress(MenuItemModel menu) {
     setState(() {
@@ -51,8 +34,10 @@ class _SideMenuState extends State<SideMenu> {
       return;
     }
 
+    // Tutup menu
     widget.closeMenu();
 
+    // Ganti konten tab melalui callback
     switch (menu.title) {
       case "Home":
         widget.onTabChange(0);
@@ -195,9 +180,9 @@ class _SideMenuState extends State<SideMenu> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _username ?? "User",
-                      style: const TextStyle(
+                    const Text(
+                      "XII RPL 1",
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 17,
                         fontFamily: "Inter",
@@ -205,7 +190,7 @@ class _SideMenuState extends State<SideMenu> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _role ?? "",
+                      "Software Engineer",
                       style: TextStyle(
                         color: Colors.white.withAlpha((0.7 * 255).round()),
                         fontSize: 15,
