@@ -19,13 +19,11 @@ class _HomeTabViewState extends State<HomeTabView> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    int crossAxisCount() => screenWidth > 992 ? 2 : 1;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.only(top: topPadding + 20, bottom: bottomPadding),
+          padding: EdgeInsets.only(top: topPadding + 60, bottom: bottomPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -39,49 +37,48 @@ class _HomeTabViewState extends State<HomeTabView> {
               ),
               const SizedBox(height: 10),
 
-              // Courses horizontal list
-              StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('courses')
-                    .orderBy('createdAt', descending: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                        child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: CircularProgressIndicator(),
-                    ));
-                  }
+              // Courses horizontal scroll
+              SizedBox(
+                height: 300, // tinggi container supaya VCard tidak terpotong
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('courses')
+                      .orderBy('createdAt', descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text("No courses available."),
-                    );
-                  }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Text("No courses available."),
+                      );
+                    }
 
-                  final courses = snapshot.data!.docs;
+                    final courses = snapshot.data!.docs;
 
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Row(
-                      children: courses.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        return Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: SizedBox(
-                            width: screenWidth > 992
-                                ? 250 // ukuran VCard di desktop
-                                : 200, // ukuran VCard di mobile
-                            child: VCard(course: CourseModel.fromMap(doc.id, data)),
+                    return ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: courses.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        final data = courses[index].data() as Map<String, dynamic>;
+                        return SizedBox(
+                          width: screenWidth > 992 ? 250 : 200,
+                          child: VCard(
+                            course: CourseModel.fromMap(
+                              courses[index].id,
+                              data,
+                            ),
                           ),
                         );
-                      }).toList(),
-                    ),
-                  );
-                },
+                      },
+                    );
+                  },
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -96,7 +93,7 @@ class _HomeTabViewState extends State<HomeTabView> {
               ),
               const SizedBox(height: 10),
 
-              // Recent courses grid adaptif
+              // Recent courses grid
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('courses')
@@ -106,10 +103,11 @@ class _HomeTabViewState extends State<HomeTabView> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
-                        child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: CircularProgressIndicator(),
-                    ));
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
                   }
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -129,17 +127,20 @@ class _HomeTabViewState extends State<HomeTabView> {
                       children: recentCourses.map((doc) {
                         final data = doc.data() as Map<String, dynamic>;
                         final cardWidth = screenWidth > 992
-                            ? (screenWidth - 30) / 2 // 2 kolom desktop
-                            : screenWidth - 20; // 1 kolom mobile
+                            ? (screenWidth - 30) / 2
+                            : screenWidth - 20;
                         return SizedBox(
                           width: cardWidth,
-                          child: HCard(section: CourseModel.fromMap(doc.id, data)),
+                          child: HCard(
+                            section: CourseModel.fromMap(doc.id, data),
+                          ),
                         );
                       }).toList(),
                     ),
                   );
                 },
               ),
+
               const SizedBox(height: 20),
             ],
           ),

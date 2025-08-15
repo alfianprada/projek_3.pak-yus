@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_samples/ui/theme.dart'; // sesuaikan dengan path proyekmu
+import 'package:flutter_samples/ui/theme.dart';
 import 'package:http/http.dart' as http;
 
 class AddCoursePage extends StatefulWidget {
@@ -29,7 +29,6 @@ class _AddCoursePageState extends State<AddCoursePage> {
   Future<bool> _checkImageUrl(String url) async {
     try {
       final response = await http.head(Uri.parse(url));
-      // cek content-type harus gambar
       if (response.statusCode == 200 &&
           response.headers['content-type'] != null &&
           response.headers['content-type']!.startsWith('image/')) {
@@ -49,17 +48,15 @@ class _AddCoursePageState extends State<AddCoursePage> {
     final video = videoController.text.trim();
     final content = contentController.text.trim();
 
-    String imageUrl = 'https://via.placeholder.com/150'; // default
+    String imageUrl = 'https://via.placeholder.com/150';
 
     if (imageUrlInput.isNotEmpty) {
       bool valid = await _checkImageUrl(imageUrlInput);
       if (!valid) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(
-                  "Image Link Not Supported. Try Another Image.")),
+          const SnackBar(content: Text("Image Link Not Supported. Try Another Image.")),
         );
-        return; // stop saving
+        return;
       } else {
         imageUrl = imageUrlInput;
       }
@@ -87,6 +84,47 @@ class _AddCoursePageState extends State<AddCoursePage> {
         SnackBar(content: Text("Error: $e")),
       );
     }
+  }
+
+  Widget buildInputField({
+    required String label,
+    required String hint,
+    TextEditingController? controller,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontFamily: "Poppins",
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: TextFormField(
+            controller: controller,
+            maxLines: maxLines,
+            decoration: InputDecoration(
+              hintText: hint,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(16),
+            ),
+            validator: validator,
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
   }
 
   @override
@@ -126,85 +164,32 @@ class _AddCoursePageState extends State<AddCoursePage> {
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              "Course Title",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontFamily: "Poppins",
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87),
-                            ),
-                            const SizedBox(height: 8),
-                            TextFormField(
+                            buildInputField(
+                              label: "Course Title",
+                              hint: "courses title..",
                               controller: titleController,
-                              decoration: const InputDecoration(
-                                hintText: "courses title..",
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.all(16),
-                              ),
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Enter title' : null,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "Image Illustration (URL or leave empty for default)",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontFamily: "Poppins",
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87),
-                            ),
-                            const SizedBox(height: 8),
-                            TextFormField(
+                            buildInputField(
+                              label: "Image Illustration",
+                              hint: "Paste image URL or leave empty",
                               controller: imageUrlController,
-                              decoration: const InputDecoration(
-                                hintText: "Paste image URL or leave empty",
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.all(16),
-                              ),
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "Video Material",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontFamily: "Poppins",
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87),
-                            ),
-                            const SizedBox(height: 8),
-                            TextFormField(
+                            buildInputField(
+                              label: "Video Material",
+                              hint: "embed a video",
                               controller: videoController,
-                              decoration: const InputDecoration(
-                                hintText: "embed a video",
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.all(16),
-                              ),
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "Content of Material",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontFamily: "Poppins",
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87),
-                            ),
-                            const SizedBox(height: 8),
-                            TextFormField(
+                            buildInputField(
+                              label: "Content of Material",
+                              hint: "Content of Material.....",
                               controller: contentController,
                               maxLines: 7,
-                              decoration: const InputDecoration(
-                                hintText: "Content of Material.....",
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.all(16),
-                              ),
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Enter content' : null,
                             ),
-                            const SizedBox(height: 24),
                           ],
                         ),
                       ),
@@ -227,9 +212,10 @@ class _AddCoursePageState extends State<AddCoursePage> {
                             child: const Text(
                               "Save & Publish",
                               style: TextStyle(
-                                  fontFamily: "Poppins",
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16),
+                                fontFamily: "Poppins",
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
@@ -257,9 +243,10 @@ class _AddCoursePageState extends State<AddCoursePage> {
                             child: const Text(
                               "Cancel",
                               style: TextStyle(
-                                  fontFamily: "Poppins",
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16),
+                                fontFamily: "Poppins",
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),

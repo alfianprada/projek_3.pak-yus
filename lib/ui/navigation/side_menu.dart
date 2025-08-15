@@ -1,124 +1,212 @@
-// Mengimpor package cupertino untuk widget gaya iOS (meskipun tidak terlihat digunakan)
-import 'package:flutter/cupertino.dart';
-// Mengimpor package material dari Flutter untuk widget Material Design
 import 'package:flutter/material.dart';
-// Mengimpor package Rive untuk animasi interaktif
-import 'package:rive/rive.dart';
-// Mengimpor komponen MenuRow untuk menampilkan item menu
-import 'package:flutter_samples/ui/components/menu_row.dart';
-// Mengimpor model data untuk item menu
-import 'package:flutter_samples/ui/models/menu_item.dart';
-// Mengimpor definisi tema aplikasi
-import 'package:flutter_samples/ui/theme.dart';
-// Mengimpor aset aplikasi (kemungkinan path file Rive atau gambar)
-import 'package:flutter_samples/ui/assets.dart' as app_assets;
+import '../components/menu_row.dart';
+import '../models/menu_item.dart';
+import '../theme.dart';
 
-// Widget untuk sidebar menu aplikasi
 class SideMenu extends StatefulWidget {
-  const SideMenu({Key? key}) : super(key: key);
+  const SideMenu({super.key, required this.onTabChange, required this.closeMenu});
+
+  // Callback untuk mengganti tab di Home
+  final Function(int index) onTabChange;
+  // Callback untuk menutup menu
+  final VoidCallback closeMenu;
 
   @override
   State<SideMenu> createState() => _SideMenuState();
 }
 
-// State untuk SideMenu, mengelola status menu dan tema
 class _SideMenuState extends State<SideMenu> {
-  // Daftar item menu untuk bagian "BROWSE"
   final List<MenuItemModel> _browseMenuIcons = MenuItemModel.menuItems;
-  // Daftar item menu untuk bagian "HISTORY"
-  // final List<MenuItemModel> _historyMenuIcons = MenuItemModel.menuItems2;
-  // Menyimpan judul menu yang sedang dipilih, default ke menu pertama
   String _selectedMenu = MenuItemModel.menuItems[0].title;
-  // Status tema gelap (tidak digunakan dalam build saat ini)
-  bool _isDarkMode = false;
 
-  // Fungsi untuk menangani klik pada item menu
   void onMenuPress(MenuItemModel menu) {
     setState(() {
-      _selectedMenu = menu.title; // Memperbarui menu yang dipilih
+      _selectedMenu = menu.title;
     });
+
+    if (menu.title == "Help") {
+      _showHelpDialog();
+      return;
+    }
+
+    // Tutup menu
+    widget.closeMenu();
+
+    // Ganti konten tab melalui callback
+    switch (menu.title) {
+      case "Home":
+        widget.onTabChange(0);
+        break;
+      case "Search":
+        widget.onTabChange(1);
+        break;
+      case "Add Courses":
+      case "Add Courses ":
+        widget.onTabChange(2);
+        break;
+      case "Account":
+        widget.onTabChange(3);
+        break;
+    }
   }
 
-  // Fungsi untuk menangani perubahan toggle tema (tidak digunakan dalam UI saat ini)
-  void onThemeToggle(value) {
-    setState(() {
-      _isDarkMode = value; // Memperbarui status tema gelap
-    });
+  void _showHelpDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFEDE6FF),
+                  Color(0xFFEAF1FF),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Need Help?",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.black54),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "We’re here to help you learn without obstacles!\n\n"
+                  "Find answers to common questions, step-by-step guides, or contact our team if you need further assistance.",
+                  style: TextStyle(color: Colors.black87, fontSize: 15, height: 1.4),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "User Guide",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "• How to easily enroll in a course\n"
+                  "• Accessing learning materials and videos\n"
+                  "• Tracking your learning progress\n"
+                  "• Earning certificates after completing a course",
+                  style: TextStyle(fontSize: 14, height: 1.4, color: Colors.black87),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text("Contact Us"),
+                ),
+                const SizedBox(height: 16),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "📧 Email: support@courseapp.com\n"
+                    "📸 Instagram: @excellion_\n"
+                    "📞 Phone: +62 812 3456 7890",
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Padding menyesuaikan dengan safe area (status bar dan navigation bar)
       padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top,
-          bottom: MediaQuery.of(context).padding.bottom - 60),
-      // Membatasi lebar maksimum sidebar
+        top: MediaQuery.of(context).padding.top,
+        bottom: MediaQuery.of(context).padding.bottom - 60,
+      ),
       constraints: const BoxConstraints(maxWidth: 288),
-      // Dekorasi sidebar dengan warna tema dan sudut membulat
       decoration: BoxDecoration(
-        color: RiveAppTheme.background2, // Warna latar belakang biru tua
+        color: RiveAppTheme.background2,
         borderRadius: BorderRadius.circular(30),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Konten rata kiri
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bagian profil pengguna
+          // Profile
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Avatar pengguna
                 CircleAvatar(
-                  backgroundColor: Colors.white.withOpacity(0.2), // Latar avatar transparan
+                  backgroundColor: Colors.white.withAlpha((0.2 * 255).round()),
                   foregroundColor: Colors.white,
-                  child: const Icon(Icons.person_outline), // Ikon profil default
+                  child: const Icon(Icons.person_outline),
                 ),
-                const SizedBox(width: 8), // Jarak antar avatar dan teks
-                // Informasi pengguna
+                const SizedBox(width: 8),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Nama atau kelas pengguna
                     const Text(
                       "XII RPL 1",
                       style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontFamily: "Inter"), // Font kustom
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontFamily: "Inter",
+                      ),
                     ),
-                    const SizedBox(height: 2), // Jarak antar teks
-                    // Deskripsi pengguna
+                    const SizedBox(height: 2),
                     Text(
                       "Software Engineer",
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.7), // Teks dengan opasitas
-                          fontSize: 15,
-                          fontFamily: "Inter"),
+                        color: Colors.white.withAlpha((0.7 * 255).round()),
+                        fontSize: 15,
+                        fontFamily: "Inter",
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          // Bagian menu yang dapat di-scroll
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Seksi menu "BROWSE"
                   MenuButtonSection(
-                      title: "BROWSE",
-                      selectedMenu: _selectedMenu,
-                      menuIcons: _browseMenuIcons,
-                      onMenuPress: onMenuPress),
-                  // Seksi menu "HISTORY"
-                  // MenuButtonSection(
-                  //     title: "HISTORY",
-                  //     selectedMenu: _selectedMenu,
-                  //     menuIcons: _historyMenuIcons,
-                  //     onMenuPress: onMenuPress),
+                    title: "BROWSE",
+                    selectedMenu: _selectedMenu,
+                    menuIcons: _browseMenuIcons,
+                    onMenuPress: onMenuPress,
+                  ),
                 ],
               ),
             ),
@@ -129,58 +217,54 @@ class _SideMenuState extends State<SideMenu> {
   }
 }
 
-// Widget untuk menampilkan seksi menu (BROWSE atau HISTORY)
 class MenuButtonSection extends StatelessWidget {
   const MenuButtonSection({
-    Key? key,
+    super.key,
     required this.title,
     required this.menuIcons,
-    this.selectedMenu = "Home", // Default menu yang dipilih
+    this.selectedMenu = "Home",
     this.onMenuPress,
-  }) : super(key: key);
+  });
 
-  final String title; // Judul seksi (BROWSE atau HISTORY)
-  final String selectedMenu; // Menu yang sedang dipilih
-  final List<MenuItemModel> menuIcons; // Daftar item menu
-  final Function(MenuItemModel menu)? onMenuPress; // Callback saat menu diklik
+  final String title;
+  final String selectedMenu;
+  final List<MenuItemModel> menuIcons;
+  final Function(MenuItemModel menu)? onMenuPress;
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Konten rata kiri
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Judul seksi
         Padding(
           padding:
               const EdgeInsets.only(left: 24, right: 24, top: 40, bottom: 8),
           child: Text(
             title,
             style: TextStyle(
-                color: Colors.white.withOpacity(0.7), // Teks dengan opasitas
-                fontSize: 15,
-                fontFamily: "Inter",
-                fontWeight: FontWeight.w600),
+              color: Colors.white.withAlpha((0.7 * 255).round()),
+              fontSize: 15,
+              fontFamily: "Inter",
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-        // Daftar item menu
         Container(
           margin: const EdgeInsets.all(8),
           child: Column(
             children: [
-              // Iterasi melalui daftar menuIcons
               for (var menu in menuIcons) ...[
-                // Garis pemisah antar item
                 Divider(
-                    color: Colors.white.withOpacity(0.1),
-                    thickness: 1,
-                    height: 1,
-                    indent: 16,
-                    endIndent: 16),
-                // Item menu menggunakan widget MenuRow
+                  color: Colors.white.withAlpha((0.1 * 255).round()),
+                  thickness: 1,
+                  height: 1,
+                  indent: 16,
+                  endIndent: 16,
+                ),
                 MenuRow(
                   menu: menu,
                   selectedMenu: selectedMenu,
-                  onMenuPress: () => onMenuPress!(menu), // Panggil callback saat diklik
+                  onMenuPress: () => onMenuPress!(menu),
                 ),
               ]
             ],
