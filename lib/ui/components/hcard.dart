@@ -33,8 +33,29 @@ class _HCardState extends State<HCard> {
 
   String formatDate(DateTime? date) {
     if (date == null) return '';
-    return "${date.year}-${date.month.toString().padLeft(2,'0')}-${date.day.toString().padLeft(2,'0')} "
-           "${date.hour.toString().padLeft(2,'0')}:${date.minute.toString().padLeft(2,'0')}";
+
+    final Duration diff = DateTime.now().difference(date);
+
+    String plural(int value, String unit) =>
+        "$value $unit${value == 1 ? '' : 's'} ago";
+
+    if (diff.inSeconds < 5) {
+      return "Just now";
+    } else if (diff.inSeconds < 60) {
+      return plural(diff.inSeconds, "second");
+    } else if (diff.inMinutes < 60) {
+      return plural(diff.inMinutes, "minute");
+    } else if (diff.inHours < 24) {
+      return plural(diff.inHours, "hour");
+    } else if (diff.inDays < 7) {
+      return plural(diff.inDays, "day");
+    } else if (diff.inDays < 30) {
+      return plural((diff.inDays / 7).floor(), "week");
+    } else if (diff.inDays < 365) {
+      return plural((diff.inDays / 30).floor(), "month");
+    } else {
+      return plural((diff.inDays / 365).floor(), "year");
+    }
   }
 
   @override
@@ -89,7 +110,7 @@ class _HCardState extends State<HCard> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Created at
+                  // Created at (relative time)
                   Text(
                     formatDate(widget.section.createdAt),
                     style: TextStyle(
