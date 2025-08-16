@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_samples/ui/home.dart';
+import 'package:flutter_samples/ui/screen/login.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -21,9 +22,9 @@ class _SignUpPageState extends State<SignUpPage> {
     if (_usernameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("All fields are required")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("All fields are required")));
       return;
     }
 
@@ -31,8 +32,8 @@ class _SignUpPageState extends State<SignUpPage> {
 
     try {
       // Create user in Firebase Auth
-      UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
@@ -60,7 +61,9 @@ class _SignUpPageState extends State<SignUpPage> {
       } else if (e.code == 'weak-password') {
         message = "Password should be at least 6 characters";
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -79,6 +82,7 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
         child: Center(
           child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -97,53 +101,95 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _usernameController,
-                        decoration: _inputDecoration("Username"),
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _emailController,
-                        decoration: _inputDecoration("Gmail"),
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: _inputDecoration("Password"),
-                      ),
-                    ],
-                  ),
+
+                // Input fields
+                TextField(
+                  controller: _usernameController,
+                  decoration: _inputDecoration("Username"),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _emailController,
+                  decoration: _inputDecoration("Gmail"),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: _inputDecoration("Password"),
                 ),
                 const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: _isLoading ? null : _signUp,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF4B5EAA), Color(0xFF8A4AF3)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+
+                // Tombol Sign Up
+                SizedBox(
+                  width: double.infinity,
+                  child: GestureDetector(
+                    onTap: _isLoading ? null : _signUp,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF4B5EAA), Color(0xFF8A4AF3)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 15),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: "Inter",
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 15,
+                      ),
+                      alignment: Alignment.center,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
                               color: Colors.white,
+                            )
+                          : const Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: "Inter",
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Tombol Login
+                SizedBox(
+                  width: double.infinity,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF4B5EAA), Color(0xFF8A4AF3)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 15,
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: "Inter",
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
