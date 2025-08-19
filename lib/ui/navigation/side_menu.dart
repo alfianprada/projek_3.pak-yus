@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_samples/ui/screen/contact_us_page.dart';
 import '../components/menu_row.dart';
 import '../models/menu_item.dart';
 import '../theme.dart';
@@ -8,17 +11,16 @@ class SideMenu extends StatefulWidget {
     super.key,
     required this.onTabChange,
     required this.closeMenu,
-    this.selectedTabIndex = 0, // beri default 0
+    this.selectedTabIndex = 0,
   });
 
   final Function(int index) onTabChange;
   final VoidCallback closeMenu;
-  final int selectedTabIndex; // sekarang optional, default 0
+  final int selectedTabIndex;
 
   @override
   State<SideMenu> createState() => _SideMenuState();
 }
-
 
 class _SideMenuState extends State<SideMenu> {
   final List<MenuItemModel> _browseMenuIcons = MenuItemModel.menuItems;
@@ -29,16 +31,12 @@ class _SideMenuState extends State<SideMenu> {
       _selectedMenu = menu.title;
     });
 
-    if (menu.title == "Help") {
-      _showHelpDialog();
-      return;
-    }
-
-    // Tutup menu
     widget.closeMenu();
 
-    // Ganti konten tab melalui callback
     switch (menu.title) {
+      case "Help":
+        _showHelpDialog();
+        return; // popup muncul
       case "Home":
         widget.onTabChange(0);
         break;
@@ -123,7 +121,12 @@ class _SideMenuState extends State<SideMenu> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ContactUsPage()),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,
                     shape: RoundedRectangleBorder(
@@ -152,6 +155,8 @@ class _SideMenuState extends State<SideMenu> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top,
@@ -165,7 +170,7 @@ class _SideMenuState extends State<SideMenu> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Profile
+          // Profile with username live from Firestore
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -180,28 +185,44 @@ class _SideMenuState extends State<SideMenu> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "XII RPL 1",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontFamily: "Inter",
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "Software Engineer",
-                      style: TextStyle(
-                        color: Colors.white.withAlpha((0.7 * 255).round()),
-                        fontSize: 15,
-                        fontFamily: "Inter",
-                      ),
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: user != null
+                          ? FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(user.uid)
+                              .snapshots()
+                          : const Stream.empty(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Text(
+                            "Loading...",
+                            style: TextStyle(color: Colors.white, fontSize: 17),
+                          );
+                        }
+                        if (!snapshot.hasData || !snapshot.data!.exists) {
+                          return const Text(
+                            "None",
+                            style: TextStyle(color: Colors.white, fontSize: 17),
+                          );
+                        }
+                        final username = snapshot.data!.get('username') ?? "None";
+                        return Text(
+                          username,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontFamily: "Inter",
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
               ],
             ),
           ),
+
+          // Menu Section
           Expanded(
             child: SingleChildScrollView(
               child: Column(

@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/courses.dart';
 import '../theme.dart';
 
+const String editCourseText = "Edit Course";
+
 class EditCoursePage extends StatefulWidget {
   final CourseModel course;
   const EditCoursePage({super.key, required this.course});
@@ -91,10 +93,10 @@ class _EditCoursePageState extends State<EditCoursePage> {
           child: TextFormField(
             controller: controller,
             maxLines: maxLines,
-            decoration: InputDecoration(
-              hintText: hint,
+            decoration: const InputDecoration(
+              hintText: '',
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
+              contentPadding: EdgeInsets.all(16),
             ),
             validator: validator,
           ),
@@ -124,15 +126,15 @@ class _EditCoursePageState extends State<EditCoursePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 50),
-                    const Text(
-                          'Edit Course',
-                          style: TextStyle(
-                            fontSize: 34,
-                            fontFamily: "Poppins",
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87, // <-- Add this
-                          ),
+                   const Text(
+                        editCourseText,
+                        style: TextStyle(
+                          fontSize: 34,
+                          fontFamily: "Poppins",
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
+                      ),
                     const SizedBox(height: 10),
                     Card(
                       color: Colors.blue[100],

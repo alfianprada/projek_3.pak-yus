@@ -19,12 +19,21 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isLoading = false;
 
   Future<void> _signUp() async {
-    if (_usernameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("All fields are required")));
+    final username = _usernameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // 🔹 Validation
+    if (username.isEmpty) {
+      _showMessage("Username cannot be empty");
+      return;
+    }
+    if (email.isEmpty) {
+      _showMessage("Email cannot be empty");
+      return;
+    }
+    if (password.isEmpty) {
+      _showMessage("Password cannot be empty");
       return;
     }
 
@@ -32,10 +41,10 @@ class _SignUpPageState extends State<SignUpPage> {
 
     try {
       // Create user in Firebase Auth
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
       );
 
       // Save username to Firestore
@@ -43,8 +52,8 @@ class _SignUpPageState extends State<SignUpPage> {
           .collection('users')
           .doc(userCredential.user!.uid)
           .set({
-        'username': _usernameController.text.trim(),
-        'email': _emailController.text.trim(),
+        'username': username,
+        'email': email,
         'createdAt': Timestamp.now(),
       });
 
@@ -55,18 +64,26 @@ class _SignUpPageState extends State<SignUpPage> {
         MaterialPageRoute(builder: (context) => RiveAppHome()),
       );
     } on FirebaseAuthException catch (e) {
-      String message = "Sign-up failed";
+      String message = "Sign-up failed. Please try again.";
       if (e.code == 'email-already-in-use') {
-        message = "Email is already registered";
+        message = "This email is already registered.";
+      } else if (e.code == 'invalid-email') {
+        message = "The email format is invalid.";
       } else if (e.code == 'weak-password') {
-        message = "Password should be at least 6 characters";
+        message = "Password should be at least 6 characters.";
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      _showMessage(message);
+    } catch (e) {
+      _showMessage("Something went wrong. Please try again later.");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -110,7 +127,8 @@ class _SignUpPageState extends State<SignUpPage> {
                 const SizedBox(height: 10),
                 TextField(
                   controller: _emailController,
-                  decoration: _inputDecoration("Gmail"),
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: _inputDecoration("Email"),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -120,7 +138,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Tombol Sign Up
+                // Sign Up Button
                 SizedBox(
                   width: double.infinity,
                   child: GestureDetector(
@@ -134,14 +152,10 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 15,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
                       alignment: Alignment.center,
                       child: _isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
+                          ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
                               'Sign Up',
                               style: TextStyle(
@@ -157,7 +171,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                 const SizedBox(height: 20),
 
-                // Tombol Login
+                // Login Button
                 SizedBox(
                   width: double.infinity,
                   child: GestureDetector(
@@ -176,9 +190,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 15,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
                       alignment: Alignment.center,
                       child: const Text(
                         'Login',

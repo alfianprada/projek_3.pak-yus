@@ -95,6 +95,13 @@ flutter:
       fonts:
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 900
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+    - family: NotoColorEmoji
+      fonts:
+        - asset: assets/fonts/NotoColorEmoji.ttf
+
 
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

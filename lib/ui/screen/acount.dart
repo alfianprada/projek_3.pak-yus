@@ -1,72 +1,122 @@
-// Mengimpor package material dari Flutter untuk widget Material Design
 import 'package:flutter/material.dart';
-// Mengimpor definisi tema aplikasi
 import 'package:flutter_samples/ui/theme.dart';
+import 'about_us_page.dart';
+import 'security_page.dart';
+import 'contact_us_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'login.dart';
 
-// Widget untuk halaman akun aplikasi
-class AcountPage extends StatelessWidget {
-  const AcountPage({super.key});
+class AccountPage extends StatefulWidget {
+  const AccountPage({super.key});
+
+  @override
+  State<AccountPage> createState() => _AccountPageState();
+}
+
+class _AccountPageState extends State<AccountPage> {
+  final user = FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Latar belakang menggunakan warna sekunder dari tema (biru tua)
       color: RiveAppTheme.background2,
       child: Center(
         child: Container(
-          // Kontainer utama dengan latar belakang tema dan sudut membulat
           decoration: BoxDecoration(
-            color: RiveAppTheme.background, // Warna latar belakang utama (biru terang)
-            borderRadius: BorderRadius.circular(30), // Sudut membulat
+            color: RiveAppTheme.background,
+            borderRadius: BorderRadius.circular(30),
           ),
-          clipBehavior: Clip.hardEdge, // Memotong konten yang melebihi batas border
+          clipBehavior: Clip.hardEdge,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding dalam
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, // Teks rata kiri
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 50), // Jarak atas
-                // Judul halaman
+                const SizedBox(height: 50),
                 const Text(
-                  'Acount',
+                  'Account',
                   style: TextStyle(
                     fontSize: 34,
-                    fontFamily: "Poppins", // Font kustom
-                    fontWeight: FontWeight.bold, // Tebal
+                    fontFamily: "Poppins",
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 20), // Jarak antar elemen
-                // Ikon akun di tengah
+                const SizedBox(height: 20),
                 const Center(
                   child: Icon(
-                    Icons.account_circle, // Ikon profil default
+                    Icons.account_circle,
                     size: 100,
                     color: Colors.black,
                   ),
                 ),
-                // Nama atau kelas pengguna
                 Center(
-                  child: Text(
-                    'XII RPL 1', // Menunjukkan kelas atau identitas pengguna
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 25,
-                      fontFamily: "Inter", // Font kustom berbeda
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: user == null
+                      ? const Text(
+                          "Guest",
+                          style: TextStyle(
+                            fontSize: 25,
+                            fontFamily: "Inter",
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(user!.uid)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const CircularProgressIndicator();
+                            }
+                            final data = snapshot.data!.data() as Map<String, dynamic>?;
+                            final username =
+                                data?['username'] ?? user!.email ?? "Guest";
+                            return Text(
+                              username,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 25,
+                                fontFamily: "Inter",
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          },
+                        ),
                 ),
-                const SizedBox(height: 20), // Jarak antar elemen
-                // Daftar opsi akun
+                const SizedBox(height: 20),
                 Expanded(
                   child: ListView(
                     children: [
-                      // Item daftar untuk setiap opsi akun
-                      _buildTile("General", Icons.settings, Color(0xFF7850F0)),
-                      _buildTile("Security", Icons.security, Color(0xFF6792FF)),
-                      _buildTile("Payment", Icons.payment, Color(0xFF005FE7)),
-                      _buildTile("Contact Us", Icons.contact_support, Color(0xFFBBA6FF)),
-                      _buildTile("Log out", Icons.logout, Color(0xFF9CC5FF)),
+                      _buildTile(
+                        context,
+                        "About Us",
+                        Icons.info,
+                        const Color(0xFF7850F0),
+                        const AboutUsPage(),
+                      ),
+                      _buildTile(
+                        context,
+                        "Security",
+                        Icons.security,
+                        const Color(0xFF6792FF),
+                        const SecurityPage(),
+                      ),
+                      _buildTile(
+                        context,
+                        "Contact Us",
+                        Icons.contact_support,
+                        const Color(0xFFBBA6FF),
+                        const ContactUsPage(),
+                      ),
+                      _buildTile(
+                        context,
+                        "Log out",
+                        Icons.logout,
+                        const Color(0xFF9CC5FF),
+                        null,
+                        isLogout: true,
+                      ),
                     ],
                   ),
                 ),
@@ -78,42 +128,67 @@ class AcountPage extends StatelessWidget {
     );
   }
 
-  // Fungsi untuk membangun tile opsi akun dengan desain kustom
-  static Widget _buildTile(String title, IconData leadingIcon, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15), // Jarak antar tile
-      decoration: BoxDecoration(
-        color: color, // Warna latar belakang tile
-        borderRadius: BorderRadius.circular(15), // Sudut membulat
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12, // Bayangan halus
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18), // Padding dalam tile
-      child: Row(
-        children: [
-          // Ikon di sisi kiri
-          Icon(leadingIcon, size: 26, color: Colors.white), // Ikon putih untuk kontras
-          const SizedBox(width: 16), // Jarak antar ikon dan teks
-          // Judul opsi
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontFamily: "Inter",
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                color: Colors.white, // Teks putih untuk kontras dengan warna tile
+  Widget _buildTile(
+    BuildContext context,
+    String title,
+    IconData leadingIcon,
+    Color color,
+    Widget? page, {
+    bool isLogout = false,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        if (isLogout) {
+          try {
+            await FirebaseAuth.instance.signOut();
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginPage()),
+              (route) => false,
+            );
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Logout failed: $e')),
+            );
+          }
+        } else if (page != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => page),
+          );
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 15),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        child: Row(
+          children: [
+            Icon(leadingIcon, size: 26, color: Colors.white),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: "Inter",
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          // Ikon panah untuk indikasi aksi
-          const Icon(Icons.arrow_forward_ios, size: 20, color: Colors.white70),
-        ],
+            const Icon(Icons.arrow_forward_ios, size: 20, color: Colors.white70),
+          ],
+        ),
       ),
     );
   }

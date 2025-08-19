@@ -55,7 +55,7 @@ class RiveAppHome extends StatefulWidget {
       const HomeTabView(),
       commonTabScene(const SearchPage()),
       commonTabScene(const AddCoursePage()),
-      commonTabScene(const AcountPage()),
+      commonTabScene(const AccountPage()),
     ];
 
     final springDesc = const SpringDescription(
