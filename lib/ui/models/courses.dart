@@ -6,6 +6,7 @@ class CourseModel {
   final String imageUrl;
   final String videoUrl;
   final String content;
+  final String creatorId; // <-- tambahkan
   final DateTime? createdAt;
 
   CourseModel({
@@ -14,6 +15,7 @@ class CourseModel {
     required this.imageUrl,
     required this.videoUrl,
     required this.content,
+    required this.creatorId, // <-- wajib diisi
     this.createdAt,
   });
 
@@ -26,9 +28,21 @@ class CourseModel {
           : 'https://via.placeholder.com/150',
       videoUrl: data['videoUrl'] ?? '',
       content: data['content'] ?? '',
+      creatorId: data['creatorId'] ?? '', // <-- ambil dari DB
       createdAt: (data['createdAt'] != null && data['createdAt'] is Timestamp)
           ? (data['createdAt'] as Timestamp).toDate()
           : null,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'imageUrl': imageUrl,
+      'videoUrl': videoUrl,
+      'content': content,
+      'creatorId': creatorId, // <-- simpan saat create
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+    };
   }
 }

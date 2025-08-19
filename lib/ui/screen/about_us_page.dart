@@ -44,6 +44,8 @@ class _AboutUsPageState extends State<AboutUsPage>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("About Us"),
@@ -55,7 +57,6 @@ class _AboutUsPageState extends State<AboutUsPage>
       ),
       body: Container(
         width: double.infinity,
-        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.deepPurple, Colors.purpleAccent],
@@ -65,12 +66,12 @@ class _AboutUsPageState extends State<AboutUsPage>
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Logo / image
-                Image.asset(topi, width: 140, height: 140),
+                // Logo
+                Image.asset(topi, width: 120, height: 120),
                 const SizedBox(height: 20),
 
                 // Title
@@ -78,29 +79,27 @@ class _AboutUsPageState extends State<AboutUsPage>
                   "Unleash Your Learning Power",
                   style: TextStyle(
                     fontFamily: 'NotoSans',
-                    fontFamilyFallback: ['NotoColorEmoji'],
-                    fontSize: 32,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     shadows: [Shadow(color: Colors.black38, blurRadius: 6)],
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Subtitle
                 const Text(
                   "Smart. Interactive. Fun.\nAll-in-one course management for students and teachers alike.",
                   style: TextStyle(
                     fontFamily: 'NotoSans',
-                    fontFamilyFallback: ['NotoColorEmoji'],
-                    fontSize: 18,
+                    fontSize: 16,
                     color: Colors.white70,
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 24),
 
                 // Description
                 const Text(
@@ -110,72 +109,61 @@ class _AboutUsPageState extends State<AboutUsPage>
                   "through intuitive and interactive tools.",
                   style: TextStyle(
                     fontFamily: 'NotoSans',
-                    fontFamilyFallback: ['NotoColorEmoji'],
-                    fontSize: 16,
+                    fontSize: 14,
                     color: Colors.white70,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
 
-                // Animated feature cards
+                // Responsive feature cards using Wrap
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: SlideTransition(
                     position: _offsetAnimation,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      alignment: WrapAlignment.center,
                       children: [
-                        _featureCard(
-                          topic_1,
-                          "Organize Courses",
-                          "Plan and manage all your courses in one place.",
-                        ),
-                        const SizedBox(width: 16),
-                        _featureCard(
-                          topic_2,
-                          "Track Students",
-                          "Monitor progress, attendance, and performance easily.",
-                        ),
-                        const SizedBox(width: 16),
-                        _featureCard(
-                          topic_3,
-                          "Interactive Lessons",
-                          "Engage students with interactive and fun learning.",
-                        ),
+                        _featureCard(screenWidth, topic_1, "Organize Courses",
+                            "Plan and manage all your courses in one place."),
+                        _featureCard(screenWidth, topic_2, "Track Students",
+                            "Monitor progress, attendance, and performance easily."),
+                        _featureCard(screenWidth, topic_3, "Interactive Lessons",
+                            "Engage students with interactive and fun learning."),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 40),
 
                 // Footer text
                 const Text(
                   "Developed with ❤️ by Team XII RPL 1\nEmpowering Education Together",
                   style: TextStyle(
                     fontFamily: 'NotoSans',
-                    fontFamilyFallback: ['NotoColorEmoji'],
-                    fontSize: 16,
+                    fontSize: 14,
                     color: Colors.white70,
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
 
                 // Call to action
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white24,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
                       )
                     ],
                   ),
@@ -183,8 +171,7 @@ class _AboutUsPageState extends State<AboutUsPage>
                     "Join us today and elevate your learning experience!",
                     style: TextStyle(
                       fontFamily: 'NotoSans',
-                      fontFamilyFallback: ['NotoColorEmoji'],
-                      fontSize: 18,
+                      fontSize: 16,
                       color: Colors.white,
                       fontStyle: FontStyle.italic,
                       fontWeight: FontWeight.w600,
@@ -192,7 +179,7 @@ class _AboutUsPageState extends State<AboutUsPage>
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 60),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -201,9 +188,13 @@ class _AboutUsPageState extends State<AboutUsPage>
     );
   }
 
-  Widget _featureCard(String imagePath, String title, String description) {
+  Widget _featureCard(
+      double screenWidth, String imagePath, String title, String description) {
+    double cardWidth = screenWidth / 2.3; // responsive width for small screens
+    if (screenWidth < 350) cardWidth = screenWidth / 1.5;
+
     return Container(
-      width: 160,
+      width: cardWidth,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white24,
@@ -211,35 +202,33 @@ class _AboutUsPageState extends State<AboutUsPage>
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
-            blurRadius: 6,
-            offset: Offset(0, 3),
+            blurRadius: 4,
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(imagePath, width: 60, height: 60),
-          const SizedBox(height: 8),
+          Image.asset(imagePath, width: 50, height: 50),
+          const SizedBox(height: 6),
           Text(
             title,
             style: const TextStyle(
               fontFamily: 'NotoSans',
-              fontFamilyFallback: ['NotoColorEmoji'],
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 14,
+              fontSize: 13,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             description,
             style: const TextStyle(
               fontFamily: 'NotoSans',
-              fontFamilyFallback: ['NotoColorEmoji'],
               color: Colors.white70,
-              fontSize: 12,
+              fontSize: 11,
             ),
             textAlign: TextAlign.center,
           ),

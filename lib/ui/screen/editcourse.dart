@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/courses.dart';
 import '../theme.dart';
 
@@ -20,6 +21,9 @@ class _EditCoursePageState extends State<EditCoursePage> {
   late TextEditingController videoController;
   late TextEditingController contentController;
 
+  bool isOwner = false;
+  final currentUser = FirebaseAuth.instance.currentUser;
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +31,8 @@ class _EditCoursePageState extends State<EditCoursePage> {
     imageUrlController = TextEditingController(text: widget.course.imageUrl);
     videoController = TextEditingController(text: widget.course.videoUrl);
     contentController = TextEditingController(text: widget.course.content);
+
+    isOwner = currentUser != null && currentUser!.uid == widget.course.creatorId;
   }
 
   @override
@@ -40,6 +46,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
 
   Future<void> updateCourse() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!isOwner) return;
 
     try {
       await FirebaseFirestore.instance
@@ -71,6 +78,8 @@ class _EditCoursePageState extends State<EditCoursePage> {
     TextEditingController? controller,
     int maxLines = 1,
     String? Function(String?)? validator,
+    bool enabled = true,
+    bool showImagePreview = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,20 +94,50 @@ class _EditCoursePageState extends State<EditCoursePage> {
           ),
         ),
         const SizedBox(height: 8),
+        if (showImagePreview && controller != null && controller.text.isNotEmpty)
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.network(
+              controller.text,
+              height: 150,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                height: 150,
+                color: Colors.grey[300],
+                child: const Center(
+                  child: Text(
+                    "Image not supported. Try another URL.",
+                    style: TextStyle(color: Colors.black54, fontFamily: "Inter"),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          ),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
           ),
           child: TextFormField(
+            enabled: enabled,
             controller: controller,
             maxLines: maxLines,
-            decoration: const InputDecoration(
-              hintText: '',
+            decoration: InputDecoration(
+              hintText: hint,
               border: InputBorder.none,
-              contentPadding: EdgeInsets.all(16),
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.all(16),
             ),
             validator: validator,
+            onChanged: (_) {
+              if (showImagePreview) setState(() {}); // refresh preview
+            },
           ),
         ),
         const SizedBox(height: 16),
@@ -126,15 +165,15 @@ class _EditCoursePageState extends State<EditCoursePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 50),
-                   const Text(
-                        editCourseText,
-                        style: TextStyle(
-                          fontSize: 34,
-                          fontFamily: "Poppins",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                    const Text(
+                      editCourseText,
+                      style: TextStyle(
+                        fontSize: 34,
+                        fontFamily: "Poppins",
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
+                    ),
                     const SizedBox(height: 10),
                     Card(
                       color: Colors.blue[100],
@@ -151,16 +190,20 @@ class _EditCoursePageState extends State<EditCoursePage> {
                               controller: titleController,
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Enter title' : null,
+                              enabled: isOwner,
                             ),
                             buildInputField(
                               label: "Image Illustration",
                               hint: "Paste image URL",
                               controller: imageUrlController,
+                              enabled: isOwner,
+                              showImagePreview: true,
                             ),
                             buildInputField(
                               label: "Video Material",
                               hint: "Embed a video",
                               controller: videoController,
+                              enabled: isOwner,
                             ),
                             buildInputField(
                               label: "Content of Material",
@@ -169,6 +212,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
                               maxLines: 7,
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Enter content' : null,
+                              enabled: isOwner,
                             ),
                           ],
                         ),
@@ -180,7 +224,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[600],
+                              backgroundColor: isOwner ? Colors.blue[600] : Colors.grey,
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 25),
@@ -188,7 +232,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            onPressed: updateCourse,
+                            onPressed: isOwner ? updateCourse : null,
                             child: const Text(
                               "Update & Publish",
                               style: TextStyle(
@@ -212,7 +256,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
                               ),
                             ),
                             onPressed: () {
-                              Navigator.pop(context, false); // cancel
+                              Navigator.pop(context, false);
                             },
                             child: const Text(
                               "Cancel",
@@ -226,6 +270,16 @@ class _EditCoursePageState extends State<EditCoursePage> {
                         ),
                       ],
                     ),
+                    if (!isOwner) ...[
+                      const SizedBox(height: 16),
+                      const Text(
+                        "⚠️ You can only edit courses you created.",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

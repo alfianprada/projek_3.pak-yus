@@ -55,9 +55,11 @@ class _SecurityPageState extends State<SecurityPage>
       return;
     }
 
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+    // Update atau buat field username baru
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
       'username': newUsername,
-    });
+    }, SetOptions(merge: true)); // merge:true → buat field baru jika belum ada
+
     _showMessage('Username updated!');
   }
 

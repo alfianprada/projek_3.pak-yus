@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_samples/ui/theme.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddCoursePage extends StatefulWidget {
   const AddCoursePage({super.key});
@@ -68,6 +69,7 @@ class _AddCoursePageState extends State<AddCoursePage> {
         'imageUrl': imageUrl,
         'videoUrl': video,
         'content': content,
+        'creatorId': FirebaseAuth.instance.currentUser!.uid, // ✅ tambahkan creatorId
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -141,6 +143,9 @@ class _AddCoursePageState extends State<AddCoursePage> {
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 60, // scroll aman
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -252,6 +257,7 @@ class _AddCoursePageState extends State<AddCoursePage> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
