@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_samples/ui/screen/contact_us_page.dart';
-import '../components/menu_row.dart';
-import '../models/menu_item.dart';
-import '../theme.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Untuk cek user yang sedang login (UID dsb.)
+import 'package:cloud_firestore/cloud_firestore.dart'; // Untuk membaca username live dari koleksi 'users'
+import 'package:flutter_samples/ui/screen/contact_us_page.dart'; // Halaman Contact Us dipanggil dari Help popup
+import '../components/menu_row.dart'; // Komponen baris menu (icon + teks)
+import '../models/menu_item.dart'; // Model / list menu (MenuItemModel.menuItems)
+import '../theme.dart'; // Tema aplikasi (warna background, shadow, dsb.)
 
+/*
+  SideMenu (drawer kustom)
+  - Menampilkan profil pengguna (username diambil realtime dari Firestore)
+  - Menampilkan daftar menu (MenuItemModel.menuItems)
+  - Menangani aksi saat user memilih menu:
+    • Menutup menu (closeMenu callback)
+    • Memanggil onTabChange(index) untuk mengganti tab di parent
+    • Menampilkan popup Help (bila dipilih)
+*/
 class SideMenu extends StatefulWidget {
   const SideMenu({
     super.key,
-    required this.onTabChange,
-    required this.closeMenu,
-    this.selectedTabIndex = 0,
+    required this.onTabChange,   // Callback untuk memberitahu parent ganti tab (index)
+    required this.closeMenu,     // Callback untuk menutup menu (biasanya trigger animasi)
+    this.selectedTabIndex = 0,   // index tab yang sedang aktif (opsional)
   });
 
   final Function(int index) onTabChange;
@@ -23,20 +32,26 @@ class SideMenu extends StatefulWidget {
 }
 
 class _SideMenuState extends State<SideMenu> {
+  // Ambil daftar menu dari model (harus didefinisikan di models/menu_item.dart)
   final List<MenuItemModel> _browseMenuIcons = MenuItemModel.menuItems;
+
+  // Nama menu yang sedang dipilih (untuk highlight)
   String _selectedMenu = MenuItemModel.menuItems[0].title;
 
+  // Dipanggil saat user menekan salah satu item menu
   void onMenuPress(MenuItemModel menu) {
     setState(() {
-      _selectedMenu = menu.title;
+      _selectedMenu = menu.title; // update highlight
     });
 
+    // Tutup dulu menu (callback ke parent supaya animasi tutup berjalan)
     widget.closeMenu();
 
+    // Routing/aksi berdasarkan judul menu (perhatikan: ini sensitif terhadap perubahan string)
     switch (menu.title) {
       case "Help":
-        _showHelpDialog();
-        return; // popup muncul
+        _showHelpDialog(); // tampilkan popup bantuan
+        return; // berhenti supaya tidak men-trigger tab change
       case "Home":
         widget.onTabChange(0);
         break;
@@ -44,7 +59,6 @@ class _SideMenuState extends State<SideMenu> {
         widget.onTabChange(1);
         break;
       case "Add Courses":
-      case "Add Courses ":
         widget.onTabChange(2);
         break;
       case "Account":
@@ -53,10 +67,11 @@ class _SideMenuState extends State<SideMenu> {
     }
   }
 
+  // Dialog bantuan (Help). Menggunakan showDialog + Dialog kustom.
   void _showHelpDialog() {
     showDialog<void>(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: true, // bisa ditutup dengan tap di luar dialog
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: Colors.transparent,
@@ -75,9 +90,10 @@ class _SideMenuState extends State<SideMenu> {
               borderRadius: BorderRadius.circular(25),
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min, // dialog mengecil mengikuti konten
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Header dialog: judul + tombol tutup
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -91,11 +107,13 @@ class _SideMenuState extends State<SideMenu> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.black54),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(context), // tutup dialog
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
+
+                // Penjelasan singkat
                 const Text(
                   "We’re here to help you learn without obstacles!\n\n"
                   "Find answers to common questions, step-by-step guides, or contact our team if you need further assistance.",
@@ -103,6 +121,8 @@ class _SideMenuState extends State<SideMenu> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
+
+                // Subbagian User Guide
                 const Text(
                   "User Guide",
                   style: TextStyle(
@@ -120,6 +140,8 @@ class _SideMenuState extends State<SideMenu> {
                   style: TextStyle(fontSize: 14, height: 1.4, color: Colors.black87),
                 ),
                 const SizedBox(height: 16),
+
+                // Tombol Contact Us (buka halaman ContactUsPage)
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -136,6 +158,8 @@ class _SideMenuState extends State<SideMenu> {
                   child: const Text("Contact Us"),
                 ),
                 const SizedBox(height: 16),
+
+                // Informasi kontak statis
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -155,22 +179,24 @@ class _SideMenuState extends State<SideMenu> {
 
   @override
   Widget build(BuildContext context) {
+    // Ambil user Firebase saat ini (bisa null jika belum login)
     final user = FirebaseAuth.instance.currentUser;
 
     return Container(
+      // Padding atas/bawah memperhitungkan safe area (status bar & bottom inset)
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top,
         bottom: MediaQuery.of(context).padding.bottom - 60,
       ),
-      constraints: const BoxConstraints(maxWidth: 288),
+      constraints: const BoxConstraints(maxWidth: 288), // lebar drawer tetap
       decoration: BoxDecoration(
-        color: RiveAppTheme.background2,
+        color: RiveAppTheme.background2, // warna dari theme custom
         borderRadius: BorderRadius.circular(30),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Profile with username live from Firestore
+          // Section profil: avatar + username (username diambil realtime dari Firestore)
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -181,11 +207,14 @@ class _SideMenuState extends State<SideMenu> {
                   child: const Icon(Icons.person_outline),
                 ),
                 const SizedBox(width: 8),
+
+                // Ambil username secara realtime dengan StreamBuilder
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     StreamBuilder<DocumentSnapshot>(
+                      // Jika user == null, gunakan stream kosong agar StreamBuilder tidak error
                       stream: user != null
                           ? FirebaseFirestore.instance
                               .collection('users')
@@ -193,18 +222,23 @@ class _SideMenuState extends State<SideMenu> {
                               .snapshots()
                           : const Stream.empty(),
                       builder: (context, snapshot) {
+                        // Tampilkan loading saat menunggu data
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Text(
                             "Loading...",
                             style: TextStyle(color: Colors.white, fontSize: 17),
                           );
                         }
+                        // Jika tidak ada data (dokumen tidak ada atau user null)
                         if (!snapshot.hasData || !snapshot.data!.exists) {
                           return const Text(
                             "None",
                             style: TextStyle(color: Colors.white, fontSize: 17),
                           );
                         }
+                        // Ambil field 'username' dengan fallback
+                        // NOTE: gunakan .get('username') karena kita yakin dokumen ada,
+                        // tapi bila field tak ada, bisa menimbulkan error — pertimbangkan pengecekan tambahan.
                         final username = snapshot.data!.get('username') ?? "None";
                         return Text(
                           username,
@@ -222,16 +256,17 @@ class _SideMenuState extends State<SideMenu> {
             ),
           ),
 
-          // Menu Section
+          // Bagian menu (scrollable jika banyak item)
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [
+                  // Section untuk kumpulan tombol menu (BROWSE dll.)
                   MenuButtonSection(
                     title: "BROWSE",
                     selectedMenu: _selectedMenu,
                     menuIcons: _browseMenuIcons,
-                    onMenuPress: onMenuPress,
+                    onMenuPress: onMenuPress, // passed callback ke MenuRow
                   ),
                 ],
               ),
@@ -243,6 +278,12 @@ class _SideMenuState extends State<SideMenu> {
   }
 }
 
+/*
+  Komponen kecil: MenuButtonSection
+  - Menerima list MenuItemModel (menuIcons) dan membangunnya
+  - Menampilkan header ('BROWSE') lalu iterasi menu
+  - Menggunakan MenuRow (komponen presentasi tiap baris menu)
+*/
 class MenuButtonSection extends StatelessWidget {
   const MenuButtonSection({
     super.key,
@@ -262,6 +303,7 @@ class MenuButtonSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Header section (label)
         Padding(
           padding:
               const EdgeInsets.only(left: 24, right: 24, top: 40, bottom: 8),
@@ -275,10 +317,13 @@ class MenuButtonSection extends StatelessWidget {
             ),
           ),
         ),
+
+        // Container yang menampung daftar menu
         Container(
           margin: const EdgeInsets.all(8),
           child: Column(
             children: [
+              // Loop setiap item menu, tampilkan divider + MenuRow
               for (var menu in menuIcons) ...[
                 Divider(
                   color: Colors.white.withAlpha((0.1 * 255).round()),
@@ -290,7 +335,7 @@ class MenuButtonSection extends StatelessWidget {
                 MenuRow(
                   menu: menu,
                   selectedMenu: selectedMenu,
-                  onMenuPress: () => onMenuPress!(menu),
+                  onMenuPress: () => onMenuPress!(menu), // panggil callback saat ditekan
                 ),
               ]
             ],

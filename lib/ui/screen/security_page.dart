@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:ui';
+import 'package:firebase_auth/firebase_auth.dart'; // untuk login, update password, dll
+import 'package:cloud_firestore/cloud_firestore.dart'; // untuk menyimpan & update username ke Firestore
+import 'dart:ui'; // untuk efek blur (glassmorphism)
 
+/// Halaman pengaturan keamanan akun (SecurityPage)
+/// Fungsinya:
+/// - Menampilkan username dari Firestore
+/// - Update username ke Firestore
+/// - Update password via Firebase Auth
 class SecurityPage extends StatefulWidget {
   const SecurityPage({super.key});
 
@@ -12,39 +17,42 @@ class SecurityPage extends StatefulWidget {
 
 class _SecurityPageState extends State<SecurityPage>
     with SingleTickerProviderStateMixin {
+  // Controller untuk input teks
   final _usernameController = TextEditingController();
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
 
+  // Animasi fade in
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentUsername();
+    _loadCurrentUsername(); // ambil username dari Firestore saat pertama dibuka
 
+    // Setup animasi fade
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-
     _fadeAnimation =
         CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-
     _controller.forward();
   }
 
+  /// Ambil username saat ini dari Firestore berdasarkan user UID
   Future<void> _loadCurrentUsername() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final doc =
           await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       _usernameController.text = doc.data()?['username'] ?? '';
-      setState(() {});
+      setState(() {}); // refresh UI
     }
   }
 
+  /// Update username ke Firestore
   Future<void> _updateUsername() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -55,14 +63,15 @@ class _SecurityPageState extends State<SecurityPage>
       return;
     }
 
-    // Update atau buat field username baru
+    // simpan username, jika field belum ada maka akan dibuat
     await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
       'username': newUsername,
-    }, SetOptions(merge: true)); // merge:true → buat field baru jika belum ada
+    }, SetOptions(merge: true));
 
     _showMessage('Username updated!');
   }
 
+  /// Update password di Firebase Authentication
   Future<void> _updatePassword() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -70,6 +79,7 @@ class _SecurityPageState extends State<SecurityPage>
     final oldPassword = _oldPasswordController.text.trim();
     final newPassword = _newPasswordController.text.trim();
 
+    // Validasi
     if (oldPassword.isEmpty || newPassword.isEmpty) {
       _showMessage('Fill all password fields');
       return;
@@ -80,12 +90,16 @@ class _SecurityPageState extends State<SecurityPage>
     }
 
     try {
+      // Re-authenticate agar bisa update password
       final cred = EmailAuthProvider.credential(
         email: user.email!,
         password: oldPassword,
       );
       await user.reauthenticateWithCredential(cred);
+
+      // Update password ke yang baru
       await user.updatePassword(newPassword);
+
       _showMessage('Password updated!');
       _oldPasswordController.clear();
       _newPasswordController.clear();
@@ -94,6 +108,7 @@ class _SecurityPageState extends State<SecurityPage>
     }
   }
 
+  /// Tampilkan pesan snackbar
   void _showMessage(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -106,6 +121,7 @@ class _SecurityPageState extends State<SecurityPage>
 
   @override
   void dispose() {
+    // bersihkan controller agar tidak memory leak
     _controller.dispose();
     _usernameController.dispose();
     _oldPasswordController.dispose();
@@ -148,6 +164,7 @@ class _SecurityPageState extends State<SecurityPage>
       ),
       body: Stack(
         children: [
+          // Background gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -157,11 +174,12 @@ class _SecurityPageState extends State<SecurityPage>
               ),
             ),
           ),
+          // Konten utama
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
               child: FadeTransition(
-                opacity: _fadeAnimation,
+                opacity: _fadeAnimation, // efek animasi fade
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -192,12 +210,17 @@ class _SecurityPageState extends State<SecurityPage>
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
+
+                    // Card update username
                     _staggeredCard(children: [
                       _buildTextField(_usernameController, 'Username', Icons.person),
                       const SizedBox(height: 16),
                       _neonButton('Update Username', _updateUsername, Icons.person),
                     ]),
+
                     const SizedBox(height: 30),
+
+                    // Card update password
                     _staggeredCard(children: [
                       _buildTextField(_oldPasswordController, 'Old Password', Icons.lock,
                           obscure: true),
@@ -208,6 +231,7 @@ class _SecurityPageState extends State<SecurityPage>
                       const SizedBox(height: 16),
                       _neonButton('Update Password', _updatePassword, Icons.lock),
                     ]),
+
                     const SizedBox(height: 50),
                     const Text(
                       '💡 Tip: Change your password regularly and keep your credentials confidential.',
@@ -224,6 +248,7 @@ class _SecurityPageState extends State<SecurityPage>
     );
   }
 
+  /// Card dengan animasi masuk (staggered)
   Widget _staggeredCard({required List<Widget> children}) {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
@@ -241,6 +266,7 @@ class _SecurityPageState extends State<SecurityPage>
     );
   }
 
+  /// Card gaya glassmorphism (efek blur + transparan)
   Widget _glassCard({required List<Widget> children}) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -262,6 +288,7 @@ class _SecurityPageState extends State<SecurityPage>
     );
   }
 
+  /// Input field dengan icon & gaya transparan
   Widget _buildTextField(
       TextEditingController controller, String label, IconData icon,
       {bool obscure = false}) {
@@ -281,6 +308,7 @@ class _SecurityPageState extends State<SecurityPage>
     );
   }
 
+  /// Tombol gaya neon
   Widget _neonButton(String text, VoidCallback onPressed, IconData icon) {
     return ElevatedButton.icon(
       onPressed: onPressed,

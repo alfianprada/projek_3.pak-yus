@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_samples/ui/models/courses.dart';
 import 'package:flutter_samples/ui/screen/detailcourse.dart';
 
+/// Widget kartu (card) untuk menampilkan informasi singkat sebuah `CourseModel`.
+/// - Menampilkan judul course, deskripsi singkat, dan waktu dibuat (relative time).
+/// - Warna background diacak setiap kali dibuat (random).
+/// - Jika diklik, akan membuka halaman detail (`CourseDetailPage`).
 class VCard extends StatefulWidget {
   const VCard({Key? key, required this.course}) : super(key: key);
 
+  /// Data course yang ditampilkan di kartu ini
   final CourseModel course;
 
   @override
@@ -13,29 +18,35 @@ class VCard extends StatefulWidget {
 }
 
 class _VCardState extends State<VCard> {
+  /// Warna kartu akan diacak menggunakan [getRandomColor()]
   late Color cardColor;
 
   @override
   void initState() {
     super.initState();
+    // Atur warna kartu secara acak saat pertama kali dibuat
     cardColor = getRandomColor();
   }
 
+  /// Fungsi untuk menghasilkan warna acak (ARGB dengan nilai RGB random)
   Color getRandomColor() {
     final Random random = Random();
     return Color.fromARGB(
-      255,
-      random.nextInt(256),
-      random.nextInt(256),
-      random.nextInt(256),
+      255, // alpha 100% (full opacity)
+      random.nextInt(256), // merah
+      random.nextInt(256), // hijau
+      random.nextInt(256), // biru
     );
   }
 
+  /// Mengubah tanggal `createdAt` menjadi format "relative time"
+  /// Contoh: "2 minutes ago", "3 days ago", "Just now"
   String formatDate(DateTime? date) {
     if (date == null) return '';
 
     final Duration diff = DateTime.now().difference(date);
 
+    // Fungsi bantu untuk menambahkan "s" saat plural
     String plural(int value, String unit) =>
         "$value $unit${value == 1 ? '' : 's'} ago";
 
@@ -61,6 +72,7 @@ class _VCardState extends State<VCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      // Saat kartu ditekan → navigasi ke halaman detail course
       onTap: () {
         Navigator.push(
           context,
@@ -70,14 +82,17 @@ class _VCardState extends State<VCard> {
         );
       },
       child: Container(
+        // Atur ukuran maksimal kartu
         constraints: const BoxConstraints(maxWidth: 260, maxHeight: 310),
         padding: const EdgeInsets.all(30),
         decoration: BoxDecoration(
+          // Background gradient dari warna acak
           gradient: LinearGradient(
             colors: [cardColor, cardColor.withOpacity(0.5)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
+          // Efek bayangan supaya tampak mengangkat (elevasi)
           boxShadow: [
             BoxShadow(
               color: cardColor.withOpacity(0.3),
@@ -90,12 +105,13 @@ class _VCardState extends State<VCard> {
               offset: const Offset(0, 1),
             ),
           ],
+          // Membuat kartu dengan sudut melengkung (rounded corners)
           borderRadius: BorderRadius.circular(30),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title
+            // Judul course
             Text(
               widget.course.title,
               style: const TextStyle(
@@ -106,7 +122,7 @@ class _VCardState extends State<VCard> {
               ),
             ),
             const SizedBox(height: 8),
-            // Content (max 3 lines)
+            // Konten course (dibatasi 3 baris, dengan ellipsis jika terlalu panjang)
             Text(
               widget.course.content,
               maxLines: 3,
@@ -117,7 +133,7 @@ class _VCardState extends State<VCard> {
               ),
             ),
             const Spacer(),
-            // Created at (relative time)
+            // Tanggal dibuat → ditampilkan dalam bentuk "relative time"
             Text(
               formatDate(widget.course.createdAt),
               style: TextStyle(

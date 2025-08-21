@@ -2,15 +2,22 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Halaman "Contact Us" dengan gaya cyberpunk / neon
+/// - Menampilkan informasi kontak (email, telepon, alamat)
+/// - Tombol untuk chat langsung via WhatsApp
 class ContactUsPage extends StatelessWidget {
   const ContactUsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Ambil lebar layar (berguna untuk responsive UI)
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      // Agar background bisa tembus di bawah AppBar
       extendBodyBehindAppBar: true,
+
+      /// AppBar transparan dengan efek neon
       appBar: AppBar(
         backgroundColor: Colors.black.withOpacity(0.3),
         elevation: 0,
@@ -32,12 +39,15 @@ class ContactUsPage extends StatelessWidget {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.cyanAccent),
+          // Tombol kembali ke halaman sebelumnya
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
+
+      /// Body menggunakan Stack agar bisa menaruh background + konten
       body: Stack(
         children: [
-          // Background Cyberpunk Gradient
+          // 🌈 Latar belakang gradient bergaya cyberpunk
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -47,6 +57,8 @@ class ContactUsPage extends StatelessWidget {
               ),
             ),
           ),
+
+          /// Konten utama
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -54,6 +66,8 @@ class ContactUsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
+
+                  // Ikon besar di tengah
                   Center(
                     child: Icon(
                       Icons.contact_mail,
@@ -68,7 +82,10 @@ class ContactUsPage extends StatelessWidget {
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 20),
+
+                  // Judul utama
                   const Text(
                     "Reach Out in Style!",
                     textAlign: TextAlign.center,
@@ -85,16 +102,20 @@ class ContactUsPage extends StatelessWidget {
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 12),
+
+                  // Deskripsi singkat
                   const Text(
                     "Questions, feedback, or just want to say hi? Hit us up below – "
                     "we love connecting with our awesome users in the coolest way possible!",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14, color: Colors.white70, height: 1.4),
                   ),
+
                   const SizedBox(height: 24),
 
-                  // Contact Info Cards
+                  /// Kartu kontak (Email, Telepon, Alamat)
                   _neonCard(
                     screenWidth,
                     icon: Icons.email,
@@ -118,9 +139,10 @@ class ContactUsPage extends StatelessWidget {
                     title: "Address",
                     subtitle: "Jl. Pendidikan No. 123, Jakarta, Indonesia",
                   ),
+
                   const SizedBox(height: 30),
 
-                  // Chat Button Neon Style
+                  /// Tombol untuk membuka WhatsApp Chat
                   Center(
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
@@ -146,9 +168,14 @@ class ContactUsPage extends StatelessWidget {
                         ),
                       ),
                       onPressed: () async {
+                        // Nomor WA tujuan
                         final phone = '+6282257173325';
+                        // Pesan default
                         final message = Uri.encodeComponent("Halo SkillUp, saya ingin bertanya...");
+                        // Format link WhatsApp API
                         final url = 'https://wa.me/$phone?text=$message';
+
+                        // Cek apakah bisa launch URL
                         if (await canLaunch(url)) {
                           await launch(url);
                         } else {
@@ -159,6 +186,7 @@ class ContactUsPage extends StatelessWidget {
                       },
                     ),
                   ),
+
                   const SizedBox(height: 40),
                 ],
               ),
@@ -169,6 +197,9 @@ class ContactUsPage extends StatelessWidget {
     );
   }
 
+  /// Fungsi builder untuk membuat "Neon Card"
+  /// - Menampilkan ikon + teks
+  /// - Ada efek blur (frosted glass) + neon glow
   Widget _neonCard(
     double screenWidth, {
     required IconData icon,
@@ -181,6 +212,7 @@ class ContactUsPage extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
+        // Efek blur kaca transparan
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
           width: cardWidth,
@@ -205,18 +237,22 @@ class ContactUsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          shadows: [
-                            Shadow(color: iconColor.withOpacity(0.6), blurRadius: 8)
-                          ],
-                        )),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        shadows: [
+                          Shadow(color: iconColor.withOpacity(0.6), blurRadius: 8)
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 3),
-                    Text(subtitle,
-                        style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
                   ],
                 ),
               ),

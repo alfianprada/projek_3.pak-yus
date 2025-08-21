@@ -1,10 +1,11 @@
-import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_samples/ui/models/courses.dart';
-import 'package:flutter_samples/ui/screen/detailcourse.dart';
-import 'package:flutter_samples/ui/theme.dart';
+import 'dart:math'; // ✅ Digunakan untuk menghasilkan warna random dengan Random()
+import 'package:cloud_firestore/cloud_firestore.dart'; // ✅ Untuk mengambil data courses dari Firestore
+import 'package:flutter/material.dart'; // ✅ UI Flutter
+import 'package:flutter_samples/ui/models/courses.dart'; // ✅ Model data Course
+import 'package:flutter_samples/ui/screen/detailcourse.dart'; // ✅ Halaman detail course
+import 'package:flutter_samples/ui/theme.dart'; // ✅ Tema aplikasi (warna, background, dll)
 
+/// Halaman SearchPage untuk mencari kursus yang tersimpan di Firestore
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -13,9 +14,10 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  String searchQuery = '';
-  final Random random = Random();
+  String searchQuery = ''; // ✅ Menyimpan kata kunci pencarian
+  final Random random = Random(); // ✅ Untuk membuat warna random tiap card
 
+  /// Fungsi untuk menghasilkan warna acak
   Color getRandomColor() {
     return Color.fromARGB(
       255,
@@ -28,12 +30,12 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: RiveAppTheme.background2,
+      color: RiveAppTheme.background2, // ✅ Warna background dari tema
       child: Center(
         child: Container(
           decoration: BoxDecoration(
-            color: RiveAppTheme.background,
-            borderRadius: BorderRadius.circular(30),
+            color: RiveAppTheme.background, // ✅ Warna utama background card
+            borderRadius: BorderRadius.circular(30), // ✅ Membuat sudut rounded
           ),
           clipBehavior: Clip.hardEdge,
           child: Padding(
@@ -42,6 +44,8 @@ class _SearchPageState extends State<SearchPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 50),
+
+                /// Judul Halaman
                 const Text(
                   'Search',
                   style: TextStyle(
@@ -49,8 +53,10 @@ class _SearchPageState extends State<SearchPage> {
                     fontFamily: "Poppins",
                   ),
                 ),
+
                 const SizedBox(height: 20),
-                // Search box
+
+                /// 🔍 Search box
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   height: 50,
@@ -72,7 +78,7 @@ class _SearchPageState extends State<SearchPage> {
                       Expanded(
                         child: TextField(
                           decoration: const InputDecoration(
-                            hintText: "Search courses...",
+                            hintText: "Search courses...", // Placeholder
                             border: InputBorder.none,
                             hintStyle: TextStyle(
                               fontFamily: "Poppins",
@@ -81,7 +87,8 @@ class _SearchPageState extends State<SearchPage> {
                           ),
                           onChanged: (value) {
                             setState(() {
-                              searchQuery = value.toLowerCase();
+                              searchQuery =
+                                  value.toLowerCase(); // ✅ Simpan query pencarian
                             });
                           },
                         ),
@@ -89,18 +96,23 @@ class _SearchPageState extends State<SearchPage> {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 10),
-                // Course list from Firestore
+
+                /// 📌 List Course dari Firestore
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
-                        .collection('courses')
-                        .orderBy('createdAt', descending: true)
-                        .snapshots(),
+                        .collection('courses') // Ambil data dari koleksi "courses"
+                        .orderBy('createdAt', descending: true) // Urutkan terbaru
+                        .snapshots(), // Stream real-time
                     builder: (context, snapshot) {
+                      // Jika masih loading
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
+
+                      // Jika tidak ada data sama sekali
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                         return const Center(
                           child: Text(
@@ -110,16 +122,23 @@ class _SearchPageState extends State<SearchPage> {
                         );
                       }
 
+                      // 🔄 Konversi dokumen ke model Course
                       final courses = snapshot.data!.docs
                           .map((doc) => CourseModel.fromMap(
                                 doc.id,
                                 doc.data() as Map<String, dynamic>,
                               ))
+                          // ✅ Filter data sesuai searchQuery (judul atau isi)
                           .where((course) =>
-                              course.title.toLowerCase().contains(searchQuery) ||
-                              course.content.toLowerCase().contains(searchQuery))
+                              course.title
+                                  .toLowerCase()
+                                  .contains(searchQuery) ||
+                              course.content
+                                  .toLowerCase()
+                                  .contains(searchQuery))
                           .toList();
 
+                      // Jika hasil pencarian kosong
                       if (courses.isEmpty) {
                         return const Center(
                           child: Text(
@@ -129,23 +148,26 @@ class _SearchPageState extends State<SearchPage> {
                         );
                       }
 
+                      // ✅ Tampilkan list course
                       return ListView.builder(
                         itemCount: courses.length,
                         itemBuilder: (context, index) {
                           final course = courses[index];
                           return GestureDetector(
                             onTap: () {
+                              // ✅ Buka halaman detail course saat di-tap
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => CourseDetailPage(course: course),
+                                  builder: (_) =>
+                                      CourseDetailPage(course: course),
                                 ),
                               );
                             },
                             child: _buildBabTile(
-                              course.title,
-                              course.content,
-                              getRandomColor(),
+                              course.title, // Judul course
+                              course.content, // Deskripsi course
+                              getRandomColor(), // Warna random tiap card
                             ),
                           );
                         },
@@ -161,6 +183,7 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
+  /// ✅ Widget custom untuk menampilkan card Course (judul + deskripsi)
   Widget _buildBabTile(String bab, String desc, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -178,7 +201,7 @@ class _SearchPageState extends State<SearchPage> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Row(
         children: [
-          // Title + separator |
+          /// Bagian Judul Course
           Row(
             children: [
               Text(
@@ -194,17 +217,18 @@ class _SearchPageState extends State<SearchPage> {
               Container(
                 width: 2,
                 height: 50,
-                color: Colors.white54,
+                color: Colors.white54, // Garis pemisah
               ),
               const SizedBox(width: 14),
             ],
           ),
-          // Description
+
+          /// Bagian Deskripsi (singkat)
           Expanded(
             child: Text(
               desc,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 1, // Batas 1 baris
+              overflow: TextOverflow.ellipsis, // Tambahkan "..." jika panjang
               style: const TextStyle(
                 fontFamily: "Poppins",
                 fontSize: 16,

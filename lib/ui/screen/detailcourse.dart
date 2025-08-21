@@ -1,28 +1,32 @@
-import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../models/courses.dart';
-import '../theme.dart';
-import '../screen/editcourse.dart';
+import 'dart:math'; // untuk generate warna random
+import 'package:flutter/material.dart'; // UI utama Flutter
+import 'package:cloud_firestore/cloud_firestore.dart'; // akses Firestore
+import 'package:url_launcher/url_launcher.dart'; // buka link video di browser/app eksternal
+import 'package:firebase_auth/firebase_auth.dart'; // autentikasi pengguna
+import '../models/courses.dart'; // model data course
+import '../theme.dart'; // tema aplikasi (warna, background, dll)
+import '../screen/editcourse.dart'; // halaman edit course
 
+// Halaman detail course, menerima 1 course dari CourseModel
 class CourseDetailPage extends StatelessWidget {
   final CourseModel course;
 
   const CourseDetailPage({super.key, required this.course});
 
+  /// Fungsi untuk generate warna random (digunakan pada card konten)
   Color getRandomColor() {
     final random = Random();
     return Color.fromARGB(
       255,
-      random.nextInt(256),
-      random.nextInt(256),
-      random.nextInt(256),
+      random.nextInt(256), // nilai merah random (0-255)
+      random.nextInt(256), // nilai hijau random (0-255)
+      random.nextInt(256), // nilai biru random (0-255)
     );
   }
 
+  /// Fungsi untuk menghapus course di Firestore
   Future<void> _deleteCourse(BuildContext context) async {
+    // tampilkan dialog konfirmasi
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -30,42 +34,46 @@ class CourseDetailPage extends StatelessWidget {
         content: const Text('Are you sure you want to delete this course?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context, false), // batal hapus
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, true), // konfirmasi hapus
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
 
+    // jika user pilih "Delete"
     if (confirm == true) {
+      // hapus data course di Firestore berdasarkan id
       await FirebaseFirestore.instance.collection('courses').doc(course.id).delete();
       if (context.mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context); // tutup halaman detail
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Course deleted')),
+          const SnackBar(content: Text('Course deleted')), // notif berhasil
         );
       }
     }
   }
 
+  /// Fungsi untuk membuka link video (jika ada)
   Future<void> _launchVideo(BuildContext context) async {
-    if (course.videoUrl.isEmpty) return;
+    if (course.videoUrl.isEmpty) return; // kalau kosong, abaikan
     final url = Uri.parse(course.videoUrl);
     if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+      await launchUrl(url, mode: LaunchMode.externalApplication); // buka pakai browser/app eksternal
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch video')),
+          const SnackBar(content: Text('Could not launch video')), // notif error
         );
       }
     }
   }
 
+  /// Fungsi untuk memformat tanggal supaya lebih rapi
   String getFormattedDate(DateTime? date) {
     if (date == null) return '';
     return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} "
@@ -74,12 +82,12 @@ class CourseDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final randomColor = getRandomColor();
-    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
-    final isCreator = course.creatorId == currentUserId; // hanya creator
+    final randomColor = getRandomColor(); // warna random untuk card konten
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid; // ambil id user aktif
+    final isCreator = course.creatorId == currentUserId; // cek apakah user adalah pembuat course
 
     return Container(
-      color: RiveAppTheme.background2,
+      color: RiveAppTheme.background2, // warna background luar
       child: Center(
         child: Container(
           decoration: BoxDecoration(
@@ -91,7 +99,7 @@ class CourseDetailPage extends StatelessWidget {
             backgroundColor: RiveAppTheme.background,
             appBar: AppBar(
               title: Text(
-                course.title,
+                course.title, // judul course
                 style: const TextStyle(
                   fontFamily: "Poppins",
                   fontSize: 20,
@@ -101,13 +109,15 @@ class CourseDetailPage extends StatelessWidget {
               backgroundColor: RiveAppTheme.background,
               elevation: 0,
             ),
+
+            // isi halaman bisa discroll
             body: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// Image with error handling
+                    /// ✅ Gambar dengan error handling
                     Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -120,7 +130,7 @@ class CourseDetailPage extends StatelessWidget {
                         width: double.infinity,
                         fit: BoxFit.cover,
                         loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
+                          if (progress == null) return child; // gambar sudah ter-load
                           return const Center(child: CircularProgressIndicator());
                         },
                         errorBuilder: (context, error, stackTrace) => Container(
@@ -138,7 +148,7 @@ class CourseDetailPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
 
-                    /// Video link
+                    /// ✅ Video link (klik untuk buka)
                     if (course.videoUrl.isNotEmpty)
                       InkWell(
                         onTap: () => _launchVideo(context),
@@ -154,7 +164,7 @@ class CourseDetailPage extends StatelessWidget {
                       ),
                     const SizedBox(height: 8),
 
-                    /// Date
+                    /// ✅ Tanggal dibuat
                     Text(
                       getFormattedDate(course.createdAt),
                       style: const TextStyle(
@@ -165,7 +175,7 @@ class CourseDetailPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    /// Content card with random color
+                    /// ✅ Konten course dengan card warna random
                     Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -177,7 +187,7 @@ class CourseDetailPage extends StatelessWidget {
                         child: Text(
                           course.content.isNotEmpty
                               ? course.content
-                              : "No content available.",
+                              : "No content available.", // jika kosong tampilkan pesan
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,
@@ -188,10 +198,11 @@ class CourseDetailPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 30),
 
-                    /// Buttons (Edit & Delete hanya untuk creator)
+                    /// ✅ Tombol Edit & Delete (hanya muncul jika creator)
                     if (isCreator)
                       Row(
                         children: [
+                          // tombol edit
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -204,12 +215,14 @@ class CourseDetailPage extends StatelessWidget {
                                 ),
                               ),
                               onPressed: () async {
+                                // pindah ke halaman EditCoursePage
                                 final result = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => EditCoursePage(course: course),
                                   ),
                                 );
+                                // jika berhasil update, tampilkan snackbar
                                 if (result == true && context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text('Course updated!')),
@@ -227,6 +240,8 @@ class CourseDetailPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 12),
+
+                          // tombol delete
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(

@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_samples/ui/home.dart';
-import 'package:flutter_samples/ui/screen/login.dart';
+import 'package:flutter/material.dart';             // ✅ UI utama Flutter
+import 'package:cloud_firestore/cloud_firestore.dart'; // ✅ Database NoSQL Firebase untuk simpan data tambahan
+import 'package:firebase_auth/firebase_auth.dart'; // ✅ Autentikasi Firebase (email & password)
+import 'package:flutter_samples/ui/home.dart';     // ✅ Halaman utama setelah login
+import 'package:flutter_samples/ui/screen/login.dart'; // ✅ Halaman login
 
+// 📌 Halaman untuk Sign Up (daftar akun baru)
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -12,18 +13,21 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  // 🔹 Controller untuk mengambil input dari user (username, email, password)
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // 🔹 Menandakan sedang loading (misalnya saat proses daftar)
   bool _isLoading = false;
 
+  // 📌 Fungsi untuk sign up user baru
   Future<void> _signUp() async {
     final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // 🔹 Validation
+    // 🔹 Validasi input (cek kalau masih kosong)
     if (username.isEmpty) {
       _showMessage("Username cannot be empty");
       return;
@@ -37,33 +41,36 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
+    // 🔹 Ganti tombol jadi loading
     setState(() => _isLoading = true);
 
     try {
-      // Create user in Firebase Auth
+      // 🔹 Buat user baru di Firebase Authentication
       UserCredential userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Save username to Firestore
+      // 🔹 Simpan data tambahan (username & email) di Firestore
       await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
+          .collection('users')                  // koleksi "users"
+          .doc(userCredential.user!.uid)        // pakai UID dari FirebaseAuth
           .set({
         'username': username,
         'email': email,
-        'createdAt': Timestamp.now(),
+        'createdAt': Timestamp.now(),           // waktu daftar
       });
 
       if (!mounted) return;
 
+      // 🔹 Kalau berhasil daftar → pindah ke halaman utama
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => RiveAppHome()),
       );
     } on FirebaseAuthException catch (e) {
+      // 🔹 Tangani error dari FirebaseAuth
       String message = "Sign-up failed. Please try again.";
       if (e.code == 'email-already-in-use') {
         message = "This email is already registered.";
@@ -74,12 +81,15 @@ class _SignUpPageState extends State<SignUpPage> {
       }
       _showMessage(message);
     } catch (e) {
+      // 🔹 Tangani error umum
       _showMessage("Something went wrong. Please try again later.");
     } finally {
+      // 🔹 Setelah semua proses selesai → matikan loading
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  // 📌 Fungsi untuk menampilkan pesan snackbar
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -89,11 +99,12 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // 📌 Tampilan background
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/samples/images/bgawal.png'),
+            image: AssetImage('assets/samples/images/bgawal.png'), // gambar background
             fit: BoxFit.cover,
           ),
         ),
@@ -103,6 +114,7 @@ class _SignUpPageState extends State<SignUpPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // 🔹 Logo di atas
                 SizedBox(
                   width: 150,
                   height: 150,
@@ -119,18 +131,22 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Input fields
+                // 🔹 Input Username
                 TextField(
                   controller: _usernameController,
                   decoration: _inputDecoration("Username"),
                 ),
                 const SizedBox(height: 10),
+
+                // 🔹 Input Email
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: _inputDecoration("Email"),
                 ),
                 const SizedBox(height: 10),
+
+                // 🔹 Input Password
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
@@ -138,11 +154,11 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Sign Up Button
+                // 🔹 Tombol Sign Up
                 SizedBox(
                   width: double.infinity,
                   child: GestureDetector(
-                    onTap: _isLoading ? null : _signUp,
+                    onTap: _isLoading ? null : _signUp, // kalau loading, tombol disable
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
@@ -155,7 +171,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       alignment: Alignment.center,
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
+                          ? const CircularProgressIndicator(color: Colors.white) // loading indicator
                           : const Text(
                               'Sign Up',
                               style: TextStyle(
@@ -171,7 +187,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                 const SizedBox(height: 20),
 
-                // Login Button
+                // 🔹 Tombol untuk pindah ke Login
                 SizedBox(
                   width: double.infinity,
                   child: GestureDetector(
@@ -212,6 +228,7 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  // 📌 Styling untuk input text
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       filled: true,

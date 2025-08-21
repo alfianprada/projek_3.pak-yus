@@ -7,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart';
 
+/// Halaman **Account** yang menampilkan informasi akun user
+/// serta menu navigasi seperti About Us, Security, Contact Us, dan Logout.
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
 
@@ -15,14 +17,16 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
+  // Ambil user yang sedang login dari FirebaseAuth
   final user = FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: RiveAppTheme.background2,
+      color: RiveAppTheme.background2, // Warna background luar
       child: Center(
         child: Container(
+          // Kotak utama dengan radius melengkung
           decoration: BoxDecoration(
             color: RiveAppTheme.background,
             borderRadius: BorderRadius.circular(30),
@@ -34,6 +38,8 @@ class _AccountPageState extends State<AccountPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 50),
+
+                /// Judul halaman
                 const Text(
                   'Account',
                   style: TextStyle(
@@ -43,6 +49,8 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                /// Ikon avatar user
                 const Center(
                   child: Icon(
                     Icons.account_circle,
@@ -50,8 +58,11 @@ class _AccountPageState extends State<AccountPage> {
                     color: Colors.black,
                   ),
                 ),
+
+                /// Menampilkan nama user / guest
                 Center(
                   child: user == null
+                      // Kalau user belum login → tampilkan Guest
                       ? const Text(
                           "Guest",
                           style: TextStyle(
@@ -60,18 +71,22 @@ class _AccountPageState extends State<AccountPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         )
+                      // Kalau user sudah login → ambil data dari Firestore
                       : StreamBuilder<DocumentSnapshot>(
                           stream: FirebaseFirestore.instance
                               .collection('users')
-                              .doc(user!.uid)
+                              .doc(user!.uid) // Ambil dokumen sesuai UID
                               .snapshots(),
                           builder: (context, snapshot) {
                             if (!snapshot.hasData) {
                               return const CircularProgressIndicator();
                             }
+
+                            // Ambil data user dari Firestore
                             final data = snapshot.data!.data() as Map<String, dynamic>?;
                             final username =
                                 data?['username'] ?? user!.email ?? "Guest";
+
                             return Text(
                               username,
                               textAlign: TextAlign.center,
@@ -85,9 +100,12 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                 ),
                 const SizedBox(height: 20),
+
+                /// List menu navigasi
                 Expanded(
                   child: ListView(
                     children: [
+                      // Menu About Us
                       _buildTile(
                         context,
                         "About Us",
@@ -95,6 +113,7 @@ class _AccountPageState extends State<AccountPage> {
                         const Color(0xFF7850F0),
                         const AboutUsPage(),
                       ),
+                      // Menu Security
                       _buildTile(
                         context,
                         "Security",
@@ -102,6 +121,7 @@ class _AccountPageState extends State<AccountPage> {
                         const Color(0xFF6792FF),
                         const SecurityPage(),
                       ),
+                      // Menu Contact Us
                       _buildTile(
                         context,
                         "Contact Us",
@@ -109,13 +129,14 @@ class _AccountPageState extends State<AccountPage> {
                         const Color(0xFFBBA6FF),
                         const ContactUsPage(),
                       ),
+                      // Menu Logout
                       _buildTile(
                         context,
                         "Log out",
                         Icons.logout,
                         const Color(0xFF9CC5FF),
                         null,
-                        isLogout: true,
+                        isLogout: true, // Flag khusus logout
                       ),
                     ],
                   ),
@@ -128,29 +149,35 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  /// Widget helper untuk membuat menu kotak (tile) dengan icon, title, dan navigasi
   Widget _buildTile(
     BuildContext context,
     String title,
     IconData leadingIcon,
     Color color,
     Widget? page, {
-    bool isLogout = false,
+    bool isLogout = false, // apakah tombol ini untuk logout
   }) {
     return GestureDetector(
       onTap: () async {
         if (isLogout) {
+          // Jika tombol logout ditekan → signOut dari Firebase
           try {
             await FirebaseAuth.instance.signOut();
+
+            // Setelah logout, arahkan ke halaman login
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const LoginPage()),
-              (route) => false,
+              (route) => false, // hapus semua route sebelumnya
             );
           } catch (e) {
+            // Jika gagal logout → tampilkan pesan error
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Logout failed: $e')),
             );
           }
         } else if (page != null) {
+          // Jika bukan logout → navigasi ke halaman tujuan
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => page),
@@ -173,8 +200,11 @@ class _AccountPageState extends State<AccountPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         child: Row(
           children: [
+            // Ikon di kiri
             Icon(leadingIcon, size: 26, color: Colors.white),
             const SizedBox(width: 16),
+
+            // Teks judul menu
             Expanded(
               child: Text(
                 title,
@@ -186,6 +216,8 @@ class _AccountPageState extends State<AccountPage> {
                 ),
               ),
             ),
+
+            // Panah kecil di kanan
             const Icon(Icons.arrow_forward_ios, size: 20, color: Colors.white70),
           ],
         ),

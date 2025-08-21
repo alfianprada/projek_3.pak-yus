@@ -1,13 +1,20 @@
+// Import package bawaan Flutter untuk UI
 import 'package:flutter/material.dart';
+// Import Cloud Firestore untuk membaca/menulis data ke database Firebase
 import 'package:cloud_firestore/cloud_firestore.dart';
+// Import FirebaseAuth untuk mengambil informasi user yang login
 import 'package:firebase_auth/firebase_auth.dart';
+// Import model Course (kelas buatan sendiri)
 import '../models/courses.dart';
+// Import tema custom aplikasi
 import '../theme.dart';
 
+// Konstanta teks judul halaman
 const String editCourseText = "Edit Course";
 
+// Halaman Edit Course -> Stateful karena butuh state (misalnya perubahan text input, validasi, dll.)
 class EditCoursePage extends StatefulWidget {
-  final CourseModel course;
+  final CourseModel course; // Course yang akan diedit dikirim lewat parameter
   const EditCoursePage({super.key, required this.course});
 
   @override
@@ -15,28 +22,37 @@ class EditCoursePage extends StatefulWidget {
 }
 
 class _EditCoursePageState extends State<EditCoursePage> {
+  // Kunci untuk validasi form
   final _formKey = GlobalKey<FormState>();
+
+  // Controller input form (untuk menangani input teks)
   late TextEditingController titleController;
   late TextEditingController imageUrlController;
   late TextEditingController videoController;
   late TextEditingController contentController;
 
+  // Flag apakah user yang login adalah pemilik course
   bool isOwner = false;
+
+  // User yang sedang login sekarang
   final currentUser = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
     super.initState();
+    // Isi awal controller dengan data dari course yang dikirim
     titleController = TextEditingController(text: widget.course.title);
     imageUrlController = TextEditingController(text: widget.course.imageUrl);
     videoController = TextEditingController(text: widget.course.videoUrl);
     contentController = TextEditingController(text: widget.course.content);
 
+    // Cek apakah user login adalah pemilik course
     isOwner = currentUser != null && currentUser!.uid == widget.course.creatorId;
   }
 
   @override
   void dispose() {
+    // Bersihkan controller saat widget dihapus
     titleController.dispose();
     imageUrlController.dispose();
     videoController.dispose();
@@ -44,11 +60,15 @@ class _EditCoursePageState extends State<EditCoursePage> {
     super.dispose();
   }
 
+  // Fungsi untuk update data course di Firestore
   Future<void> updateCourse() async {
+    // Validasi form (jika invalid -> return)
     if (!_formKey.currentState!.validate()) return;
+    // Cegah update jika bukan owner
     if (!isOwner) return;
 
     try {
+      // Update data ke Firestore berdasarkan ID course
       await FirebaseFirestore.instance
           .collection('courses')
           .doc(widget.course.id)
@@ -59,12 +79,15 @@ class _EditCoursePageState extends State<EditCoursePage> {
         'content': contentController.text.trim(),
       });
 
+      // Jika widget masih ada, tampilkan snackbar sukses
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Course updated successfully")),
       );
+      // Tutup halaman edit dan kirim hasil true (berhasil update)
       Navigator.pop(context, true);
     } catch (e) {
+      // Jika error, tampilkan pesan error
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -72,18 +95,20 @@ class _EditCoursePageState extends State<EditCoursePage> {
     }
   }
 
+  // Widget helper untuk membangun input field
   Widget buildInputField({
-    required String label,
-    required String hint,
+    required String label, // Judul field
+    required String hint, // Hint/placeholder
     TextEditingController? controller,
     int maxLines = 1,
     String? Function(String?)? validator,
     bool enabled = true,
-    bool showImagePreview = false,
+    bool showImagePreview = false, // Jika true, tampilkan preview gambar
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Label field
         Text(
           label,
           style: const TextStyle(
@@ -94,6 +119,8 @@ class _EditCoursePageState extends State<EditCoursePage> {
           ),
         ),
         const SizedBox(height: 8),
+
+        // Jika showImagePreview true dan URL valid -> tampilkan preview gambar
         if (showImagePreview && controller != null && controller.text.isNotEmpty)
           Card(
             shape: RoundedRectangleBorder(
@@ -105,6 +132,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
               height: 150,
               width: double.infinity,
               fit: BoxFit.cover,
+              // Jika error (URL gambar salah), tampilkan fallback
               errorBuilder: (context, error, stackTrace) => Container(
                 height: 150,
                 color: Colors.grey[300],
@@ -118,13 +146,15 @@ class _EditCoursePageState extends State<EditCoursePage> {
               ),
             ),
           ),
+
+        // Input form
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
           ),
           child: TextFormField(
-            enabled: enabled,
+            enabled: enabled, // hanya bisa edit jika owner
             controller: controller,
             maxLines: maxLines,
             decoration: InputDecoration(
@@ -135,8 +165,9 @@ class _EditCoursePageState extends State<EditCoursePage> {
               contentPadding: const EdgeInsets.all(16),
             ),
             validator: validator,
+            // Jika preview gambar aktif, maka update preview saat teks berubah
             onChanged: (_) {
-              if (showImagePreview) setState(() {}); // refresh preview
+              if (showImagePreview) setState(() {});
             },
           ),
         ),
@@ -145,10 +176,11 @@ class _EditCoursePageState extends State<EditCoursePage> {
     );
   }
 
+  // Bangun UI utama halaman
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: RiveAppTheme.background2,
+      color: RiveAppTheme.background2, // warna background (dari theme custom)
       child: Center(
         child: Container(
           decoration: BoxDecoration(
@@ -160,11 +192,12 @@ class _EditCoursePageState extends State<EditCoursePage> {
             padding: const EdgeInsets.all(20),
             child: SingleChildScrollView(
               child: Form(
-                key: _formKey,
+                key: _formKey, // pakai form untuk validasi
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 50),
+                    // Judul halaman
                     const Text(
                       editCourseText,
                       style: TextStyle(
@@ -175,6 +208,8 @@ class _EditCoursePageState extends State<EditCoursePage> {
                       ),
                     ),
                     const SizedBox(height: 10),
+
+                    // Kartu yang berisi form input
                     Card(
                       color: Colors.blue[100],
                       shape: RoundedRectangleBorder(
@@ -184,6 +219,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
+                            // Input title
                             buildInputField(
                               label: "Course Title",
                               hint: "Course title..",
@@ -192,6 +228,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
                                   v == null || v.isEmpty ? 'Enter title' : null,
                               enabled: isOwner,
                             ),
+                            // Input image + preview
                             buildInputField(
                               label: "Image Illustration",
                               hint: "Paste image URL",
@@ -199,12 +236,14 @@ class _EditCoursePageState extends State<EditCoursePage> {
                               enabled: isOwner,
                               showImagePreview: true,
                             ),
+                            // Input video
                             buildInputField(
                               label: "Video Material",
                               hint: "Embed a video",
                               controller: videoController,
                               enabled: isOwner,
                             ),
+                            // Input content
                             buildInputField(
                               label: "Content of Material",
                               hint: "Content of Material.....",
@@ -219,8 +258,11 @@ class _EditCoursePageState extends State<EditCoursePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Tombol Update & Cancel
                     Row(
                       children: [
+                        // Tombol Update & Publish
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -232,7 +274,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            onPressed: isOwner ? updateCourse : null,
+                            onPressed: isOwner ? updateCourse : null, // hanya aktif jika owner
                             child: const Text(
                               "Update & Publish",
                               style: TextStyle(
@@ -244,6 +286,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
                           ),
                         ),
                         const SizedBox(width: 12),
+                        // Tombol Cancel
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -256,7 +299,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
                               ),
                             ),
                             onPressed: () {
-                              Navigator.pop(context, false);
+                              Navigator.pop(context, false); // kembali tanpa update
                             },
                             child: const Text(
                               "Cancel",
@@ -270,6 +313,8 @@ class _EditCoursePageState extends State<EditCoursePage> {
                         ),
                       ],
                     ),
+
+                    // Pesan warning jika bukan owner
                     if (!isOwner) ...[
                       const SizedBox(height: 16),
                       const Text(
