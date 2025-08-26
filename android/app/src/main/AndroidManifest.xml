@@ -2,7 +2,7 @@
     package="com.yuga.course">
 
     <application
-        android:label="flutter_samples"
+        android:label="SkillUp!"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
